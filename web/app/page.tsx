@@ -1,6 +1,5 @@
-import { buildJournalDays } from '../../shared/journal';
+import { DayPager } from '../components/DayPager';
 import { loadLocalJournalDays } from '../lib/local-store';
-import { BoardView } from '../components/BoardView';
 
 export default async function Page() {
   const days = await loadLocalJournalDays();
@@ -17,7 +16,7 @@ export default async function Page() {
         </p>
       </header>
 
-      {currentDay ? <BoardView day={currentDay} /> : <p>No journal data yet.</p>}
+      <DayPager days={days} />
 
       <section className="highlights">
         <header className="highlights__header">
