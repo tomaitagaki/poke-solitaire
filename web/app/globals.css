@@ -525,39 +525,12 @@ h1, h2, h3 {
   border-radius: var(--radius-md);
 }
 
-.card-glow-wrap--active {
-  z-index: 50;
-}
-
-.card-glow-wrap--active::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: calc(var(--radius-md) + 4px);
-  background: conic-gradient(
-    from 0deg,
-    rgba(138, 108, 70, 0.5),
-    rgba(200, 160, 90, 0.7),
-    rgba(255, 220, 140, 0.5),
-    rgba(200, 160, 90, 0.7),
-    rgba(138, 108, 70, 0.5)
-  );
-  animation: glow-spin 2s linear infinite;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.card-glow-wrap--active::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  z-index: -1;
-}
-
-@keyframes glow-spin {
-  to { transform: rotate(360deg); }
+.card-glow-wrap--active .card-stack {
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    0 0 20px rgba(138, 108, 70, 0.25),
+    0 0 40px rgba(138, 108, 70, 0.1);
+  transition: box-shadow 150ms ease-out;
 }
 
 /* ── Merge dialog ── */
