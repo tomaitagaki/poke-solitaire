@@ -25,6 +25,7 @@ export type JournalCard = {
   summary: string;
   state: JournalState;
   messageIds: string[];
+  messages: MessageRow[];
   sourceConversationIds: string[];
   interactionCount: number;
   labels: string[];
@@ -189,6 +190,7 @@ export function clusterMessagesIntoCards(rows: MessageRow[]): JournalCard[] {
         summary: summary || 'No summary yet.',
         state,
         messageIds: group.map((row) => row.id),
+        messages: group,
         sourceConversationIds: Array.from(new Set(group.map((row) => row.conversationId ?? row.threadId ?? row.id))),
         interactionCount: group.length,
         labels: ['cards', 'journal', state],

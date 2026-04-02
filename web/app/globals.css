@@ -76,13 +76,15 @@ body {
   gap: 10px;
 }
 
-.pager__controls button {
+.pager__controls button,
+.board__btn {
   border: 1px solid rgba(79, 55, 26, 0.12);
   background: #fffaf2;
   color: #1f1d1a;
   border-radius: 999px;
   padding: 10px 14px;
   cursor: pointer;
+  font-size: 0.85rem;
 }
 
 .pager__controls button:disabled {
@@ -90,12 +92,24 @@ body {
   cursor: not-allowed;
 }
 
-.board__stacks,
-.highlights__grid {
-  display: grid;
-  gap: 16px;
-  margin-top: 18px;
+.board__btn:hover {
+  background: #f0e1cd;
 }
+
+.board__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Canvas */
+
+.board__canvas {
+  position: relative;
+  margin-top: 18px;
+  overflow: visible;
+}
+
+/* Card stacks */
 
 .card-stack,
 .highlight-card {
@@ -103,7 +117,148 @@ body {
   border: 1px solid rgba(79, 55, 26, 0.12);
   border-radius: 22px;
   padding: 18px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+  user-select: none;
 }
+
+.card-stack:hover {
+  box-shadow: 0 4px 16px rgba(57, 38, 14, 0.12);
+}
+
+.card-stack--expanded {
+  background: #fff8ee;
+  border-color: rgba(79, 55, 26, 0.18);
+  box-shadow: 0 6px 24px rgba(57, 38, 14, 0.12);
+  z-index: 50;
+}
+
+.card-stack--archived {
+  opacity: 0.55;
+}
+
+/* Messages (expanded state) */
+
+.card-stack__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.card-stack__message {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px 10px;
+  background: rgba(246, 241, 232, 0.6);
+  border-radius: 12px;
+}
+
+.card-stack__message-time {
+  font-size: 0.8rem;
+  color: #8a6c46;
+  white-space: nowrap;
+}
+
+.card-stack__message-sender {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5c564d;
+}
+
+.card-stack__message-text {
+  margin: 0;
+  color: #1f1d1a;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+/* Labels */
+
+.card-stack__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: #e8dccb;
+  color: #5c564d;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.label-chip__remove {
+  background: none;
+  border: none;
+  color: #8a6c46;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* Card actions */
+
+.card-stack__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  color: #7f7161;
+  font-size: 0.92rem;
+  align-items: center;
+}
+
+.card-stack__actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.card-action-btn {
+  background: none;
+  border: 1px solid rgba(79, 55, 26, 0.12);
+  color: #8a6c46;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.card-action-btn:hover {
+  background: #f0e1cd;
+}
+
+.label-input-form {
+  display: inline;
+}
+
+.label-input {
+  width: 80px;
+  padding: 3px 8px;
+  border: 1px solid rgba(79, 55, 26, 0.2);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: #fffaf2;
+  outline: none;
+}
+
+.label-input:focus {
+  border-color: #8a6c46;
+}
+
+/* Tempo chip */
 
 .tempo-chip {
   white-space: nowrap;
@@ -114,17 +269,73 @@ body {
   font-size: 0.85rem;
 }
 
-.card-stack__meta {
+/* Highlights */
+
+.highlights__grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.highlights__pending,
+.highlights__confirmed {
+  margin-top: 16px;
+}
+
+.highlights__section-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a6c46;
+  margin: 0 0 10px;
+}
+
+.highlights__empty {
+  color: #7f7161;
+  margin-top: 16px;
+}
+
+.highlight-card__header {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: 12px;
-  margin-top: 16px;
-  color: #7f7161;
-  font-size: 0.92rem;
+}
+
+.highlight-card__header h3 {
+  margin: 0;
+}
+
+.highlight-card__day {
+  font-size: 0.8rem;
+  color: #8a6c46;
+  white-space: nowrap;
+}
+
+.highlight-card__reason {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #8a6c46;
+  margin-top: 6px;
+}
+
+.highlight-card--pending {
+  border-color: rgba(138, 108, 70, 0.25);
+  background: #fff5e6;
+}
+
+.highlight-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.highlight-btn--confirm {
+  background: #e8dccb;
+  font-weight: 600;
 }
 
 @media (min-width: 880px) {
-  .board__stacks,
   .highlights__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

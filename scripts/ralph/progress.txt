@@ -1,0 +1,12 @@
+# Ralph Progress Log
+Feature: Poke Solitaire V1 — Interactive Journal
+Branch: feat/poke-solitaire-v1
+Verify Mode: gstack-browser-use
+
+## Context
+- Phase 1 (collector + read-only boards) already built
+- This loop implements Phase 2 (canvas + interaction) and Phase 3 (highlights)
+- 8 user stories: US-001 through US-008
+
+## Progress
+(entries added per iteration)

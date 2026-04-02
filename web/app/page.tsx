@@ -1,10 +1,9 @@
 import { DayPager } from '../components/DayPager';
-import { loadLocalJournalDays } from '../lib/local-store';
+import { HighlightsView } from '../components/HighlightsView';
+import { loadLocalJournalDays, loadHighlights } from '../lib/local-store';
 
 export default async function Page() {
-  const days = await loadLocalJournalDays();
-  const currentDay = days[days.length - 1];
-  const highlights = currentDay?.cards.filter((card) => card.state === 'archived' || card.tempo.label === 'bursty').slice(0, 3) ?? [];
+  const [days, highlights] = await Promise.all([loadLocalJournalDays(), loadHighlights()]);
 
   return (
     <main className="shell">
@@ -18,24 +17,7 @@ export default async function Page() {
 
       <DayPager days={days} />
 
-      <section className="highlights">
-        <header className="highlights__header">
-          <p className="eyebrow">Highlights and Bangers</p>
-          <h2>High-signal interactions</h2>
-        </header>
-        <div className="highlights__grid">
-          {highlights.length ? (
-            highlights.map((card) => (
-              <article className="highlight-card" key={card.id}>
-                <h3>{card.title}</h3>
-                <p>{card.summary}</p>
-              </article>
-            ))
-          ) : (
-            <p>No highlights yet.</p>
-          )}
-        </div>
-      </section>
+      <HighlightsView days={days} suggestions={highlights.suggestions} />
     </main>
   );
 }

@@ -1,0 +1,172 @@
+{
+  "branchName": "feat/poke-solitaire-v1",
+  "verifyMode": "gstack-browser-use",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Expand stack to see messages",
+      "description": "Click a CardStack to expand it and see individual messages with timestamps in chronological order. Click again or press Escape to collapse.",
+      "testingProcedure": [
+        "Navigate to localhost:3000",
+        "Click on a card stack",
+        "Verify it expands to show individual messages with timestamps",
+        "Click again or press Escape to collapse"
+      ],
+      "acceptanceCriteria": [
+        "Clicking a stack expands it to show messages",
+        "Each message shows text and timestamp",
+        "Messages are in chronological order",
+        "Stack collapses on second click or Escape"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-002",
+      "title": "Draggable spatial canvas",
+      "description": "Replace the static grid layout with a spatial canvas. Stacks render in a default solitaire (column) layout but can be dragged to any position on a finite canvas. Install @dnd-kit/core for drag interaction.",
+      "testingProcedure": [
+        "Navigate to localhost:3000",
+        "Verify stacks render in column layout by default",
+        "Drag a stack to a new position",
+        "Verify it stays where dropped"
+      ],
+      "acceptanceCriteria": [
+        "Stacks render in solitaire column layout by default",
+        "Stacks are draggable to any position on the canvas",
+        "Canvas has defined bounds (finite, not infinite scroll)",
+        "Dropped stacks stay in their new position"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "title": "Persist canvas layout per-day",
+      "description": "Save canvas positions to localStorage keyed by dayKey. On reload, restore positions. Each day has its own independent layout. Add a 'Reset Layout' button that returns to solitaire default.",
+      "testingProcedure": [
+        "Drag a stack to a new position",
+        "Reload the page",
+        "Verify the stack is still in the moved position",
+        "Navigate to a different day and verify it has its own layout",
+        "Click Reset Layout and verify stacks return to solitaire columns"
+      ],
+      "acceptanceCriteria": [
+        "Canvas positions persist across page reloads",
+        "Each day has independent saved layout",
+        "Reset Layout button returns to default solitaire columns",
+        "Positions stored in localStorage keyed by dayKey"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-004",
+      "title": "Archive stacks",
+      "description": "Add an archive action to each stack (button or context menu). Archived stacks collapse visually and gather in the bottom-right corner of the canvas as a small pile. They remain visible but visually distinct (muted, smaller).",
+      "testingProcedure": [
+        "Click the archive button on a stack",
+        "Verify it collapses and moves to bottom-right",
+        "Verify it looks visually distinct (muted/smaller)",
+        "Verify archived state persists on reload"
+      ],
+      "acceptanceCriteria": [
+        "Each stack has an archive action",
+        "Archived stacks collapse to bottom-right corner",
+        "Archived stacks are visually distinct (muted, smaller)",
+        "Archive state persists across reloads"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-005",
+      "title": "Label stacks",
+      "description": "Add ability to attach freeform labels to stacks. Labels display as small chips on the card. Labels persist across reloads via localStorage.",
+      "testingProcedure": [
+        "Click to add a label on a stack",
+        "Type a label name and confirm",
+        "Verify the label appears as a chip on the card",
+        "Reload and verify label persists"
+      ],
+      "acceptanceCriteria": [
+        "Can add one or more freeform labels to a stack",
+        "Labels display as chips on the card",
+        "Labels persist across reloads",
+        "Can remove a label"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-006",
+      "title": "Merge stacks",
+      "description": "Drag one stack onto another to merge them. The merged stack combines messages from both in chronological order. The merge persists across reloads.",
+      "testingProcedure": [
+        "Drag stack A onto stack B",
+        "Verify a merge prompt or action appears",
+        "Confirm the merge",
+        "Verify the resulting stack contains messages from both, chronologically ordered",
+        "Reload and verify merge persists"
+      ],
+      "acceptanceCriteria": [
+        "Can merge two stacks via drag-onto interaction",
+        "Merged stack contains all messages chronologically",
+        "Merge persists across reloads",
+        "Original separate stacks no longer appear"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-007",
+      "title": "Highlights auto-suggest via OpenRouter",
+      "description": "Add a batch script that sends day stacks to OpenRouter LLM to detect 'cool' or viral-worthy moments. Store suggestions in localStorage. Run as part of the nightly workflow or manually.",
+      "testingProcedure": [
+        "Run the highlights batch script manually",
+        "Verify it calls OpenRouter with stack content",
+        "Verify suggestions are stored locally",
+        "Verify suggested highlights appear in the UI with confirm/dismiss buttons"
+      ],
+      "acceptanceCriteria": [
+        "Batch script sends stacks to OpenRouter for highlight detection",
+        "Suggestions stored in localStorage with stack IDs",
+        "UI shows suggested highlights with confirm/dismiss",
+        "Confirmed highlights persist; dismissed ones are hidden"
+      ],
+      "passes": false
+    },
+    {
+      "id": "US-008",
+      "title": "Highlights & Bangers surface",
+      "description": "Dedicated highlights view that shows confirmed highlights across all days. Accessible from the main navigation. Shows the highlight message in context of its stack.",
+      "testingProcedure": [
+        "Confirm a few highlights from suggestions",
+        "Navigate to the Highlights & Bangers view",
+        "Verify confirmed highlights are displayed",
+        "Verify each highlight shows context from its stack"
+      ],
+      "acceptanceCriteria": [
+        "Dedicated highlights page/section accessible from nav",
+        "Shows all confirmed highlights across days",
+        "Each highlight shows stack context",
+        "Empty state when no highlights confirmed yet"
+      ],
+      "passes": false
+    }
+  ],
+  "premortem": {
+    "tigers": [
+      "Canvas interaction complexity — @dnd-kit setup with free positioning + persistence",
+      "Topic detection accuracy — time gaps are reliable, topic splits may misfire",
+      "chat.db schema — undocumented, macOS-version dependent",
+      "OpenRouter dependency — network + cost for local-first tool"
+    ],
+    "elephants": [
+      "Canvas vs solitaire tension — solitaire is auto-layout, canvas is container, Reset returns to default",
+      "Full loop scope — phased delivery keeps each step independently useful"
+    ],
+    "mitigations": [
+      "Use @dnd-kit with grid snapping before freeform",
+      "Time gaps as default, topic detection as refinement, manual merge as escape hatch",
+      "Pin to known schema, add version detection",
+      "Batch LLM calls during cron only, cache locally",
+      "Clear UX: auto-layout is default, manual positioning overrides it",
+      "Each user story is shippable independently"
+    ]
+  }
+}
