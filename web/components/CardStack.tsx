@@ -1,7 +1,34 @@
+/* ─────────────────────────────────────────────────────────
+ * ANIMATION STORYBOARD: Card Expand (vertical card fan)
+ *
+ *    0ms   summary crossfades out
+ *   0-50ms messages container appears
+ *   80ms   first message fans in (translateY -6px → 0, opacity 0 → 1)
+ *  130ms   second message fans in
+ *  180ms   third message fans in
+ *  ...     (staggered 50ms per message, ease-out-quart)
+ *
+ * Collapse reverses: messages fade, summary fades back in.
+ * Reduced-motion: instant show/hide, no transform.
+ * ───────────────────────────────────────────────────────── */
+
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import type { JournalCard } from '../../shared/journal';
+
+/* ── Timing ── */
+const TIMING = {
+  fanStagger:  50,    // ms between each message appearing
+  fanInitial:  80,    // ms before first message appears
+  crossfade:   120,   // ms for summary ↔ messages crossfade
+};
+
+/* ── Fan config ── */
+const FAN = {
+  offsetY:   -6,      // px each message slides from
+  offsetX:    0,
+};
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -28,12 +55,22 @@ export function CardStack({
   onRemoveLabel,
 }: CardStackProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
   const [showLabelInput, setShowLabelInput] = useState(false);
   const [labelDraft, setLabelDraft] = useState('');
 
   const toggle = useCallback(() => {
     if (!isArchived) setExpanded((prev) => !prev);
   }, [isArchived]);
+
+  /* Stagger the message render slightly after expand triggers */
+  useEffect(() => {
+    if (expanded) {
+      const t = setTimeout(() => setShowMessages(true), 10);
+      return () => clearTimeout(t);
+    }
+    setShowMessages(false);
+  }, [expanded]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -62,6 +99,7 @@ export function CardStack({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && toggle()}
+      aria-expanded={expanded}
     >
       <div className="card-stack__header">
         <div>
@@ -83,8 +121,9 @@ export function CardStack({
                   type="button"
                   className="label-chip__remove"
                   onClick={(e) => { e.stopPropagation(); onRemoveLabel(label); }}
+                  aria-label={`Remove label ${label}`}
                 >
-                  x
+                  &times;
                 </button>
               )}
             </span>
@@ -92,31 +131,49 @@ export function CardStack({
         </div>
       )}
 
-      {expanded ? (
-        <div className="card-stack__messages">
-          {card.messages.map((msg) => (
-            <div key={msg.id} className="card-stack__message">
-              <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
-              <span className="card-stack__message-sender">{msg.sender ?? 'me'}</span>
-              <p className="card-stack__message-text">{msg.text}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="card-stack__summary">{card.summary}</p>
-      )}
+      <div className="card-stack__body">
+        <p className={`card-stack__summary ${expanded ? 'card-stack__summary--hidden' : ''}`}>
+          {card.summary}
+        </p>
+
+        {expanded && (
+          <div className={`card-stack__messages ${showMessages ? 'card-stack__messages--visible' : ''}`}>
+            {card.messages.map((msg, i) => (
+              <div
+                key={msg.id}
+                className="card-stack__message"
+                style={{
+                  '--fan-index': i,
+                  '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
+                  '--fan-offset-y': `${FAN.offsetY}px`,
+                } as React.CSSProperties}
+              >
+                <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
+                <span className="card-stack__message-sender">{msg.sender ?? 'me'}</span>
+                <p className="card-stack__message-text">{msg.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="card-stack__meta">
         <span>{card.interactionCount} interactions</span>
         <div className="card-stack__actions" onClick={(e) => e.stopPropagation()}>
           {!isArchived && onArchive && (
-            <button type="button" className="card-action-btn" onClick={onArchive}>archive</button>
+            <button type="button" className="card-action-btn" onClick={onArchive} aria-label="Archive this stack">
+              archive
+            </button>
           )}
           {isArchived && onUnarchive && (
-            <button type="button" className="card-action-btn" onClick={onUnarchive}>restore</button>
+            <button type="button" className="card-action-btn" onClick={onUnarchive} aria-label="Restore this stack">
+              restore
+            </button>
           )}
           {onAddLabel && !showLabelInput && (
-            <button type="button" className="card-action-btn" onClick={() => setShowLabelInput(true)}>+ label</button>
+            <button type="button" className="card-action-btn" onClick={() => setShowLabelInput(true)} aria-label="Add label">
+              + label
+            </button>
           )}
           {showLabelInput && (
             <form onSubmit={handleAddLabel} className="label-input-form">

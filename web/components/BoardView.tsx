@@ -3,29 +3,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DndContext, PointerSensor, useDraggable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import type { JournalCard, JournalDay } from '../../shared/journal';
-import { useCanvasState, computeSolitaireLayout, type Position } from '../lib/use-canvas-state';
+import { useCanvasState, type Position } from '../lib/use-canvas-state';
 import { CardStack } from './CardStack';
 
 const CARD_WIDTH = 320;
-const CANVAS_MIN_HEIGHT = 600;
-const ARCHIVE_PADDING = 16;
+const CANVAS_MIN_HEIGHT = 480;
 
 function DraggableCard({
   card,
   position,
-  isArchived,
   userLabels,
   onArchive,
-  onUnarchive,
   onAddLabel,
   onRemoveLabel,
 }: {
   card: JournalCard;
   position: Position;
-  isArchived: boolean;
   userLabels: string[];
   onArchive: () => void;
-  onUnarchive: () => void;
   onAddLabel: (label: string) => void;
   onRemoveLabel: (label: string) => void;
 }) {
@@ -38,22 +33,20 @@ function DraggableCard({
     left: position.x,
     top: position.y,
     width: CARD_WIDTH,
-    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     zIndex: isDragging ? 100 : 1,
-    opacity: isDragging ? 0.85 : isArchived ? 0.55 : 1,
-    scale: isArchived ? '0.75' : '1',
-    transition: isDragging ? 'none' : 'opacity 0.2s, scale 0.2s',
+    opacity: isDragging ? 0.85 : 1,
+    transition: isDragging ? 'none' : 'opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1)',
     cursor: 'grab',
+    willChange: isDragging ? 'transform' : undefined,
   };
 
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <CardStack
         card={card}
-        isArchived={isArchived}
         userLabels={userLabels}
         onArchive={onArchive}
-        onUnarchive={onUnarchive}
         onAddLabel={onAddLabel}
         onRemoveLabel={onRemoveLabel}
       />
@@ -119,13 +112,8 @@ export function BoardView({ day }: { day: JournalDay }) {
     });
   }, [day.cards, merges, mergedSourceIds]);
 
-  // Separate active and archived cards
   const activeCards = effectiveCards.filter((c) => !archived.includes(c.id));
   const archivedCards = effectiveCards.filter((c) => archived.includes(c.id));
-
-  // Compute archive pile position (bottom-right)
-  const archiveBaseX = Math.max(0, containerWidth - CARD_WIDTH - ARCHIVE_PADDING);
-  const archiveBaseY = CANVAS_MIN_HEIGHT - 160;
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over, delta } = event;
@@ -133,9 +121,10 @@ export function BoardView({ day }: { day: JournalDay }) {
     const currentPos = positions[cardId];
     if (!currentPos) return;
 
-    // Check if dropped on another card for merge
     if (over && over.id !== active.id) {
-      const confirmed = window.confirm(`Merge "${activeCards.find(c => c.id === active.id)?.title}" into "${activeCards.find(c => c.id === over.id)?.title}"?`);
+      const confirmed = window.confirm(
+        `Merge \u201c${activeCards.find(c => c.id === active.id)?.title}\u201d into \u201c${activeCards.find(c => c.id === over.id)?.title}\u201d?`
+      );
       if (confirmed) {
         mergeCards(over.id as string, cardId);
         return;
@@ -170,26 +159,8 @@ export function BoardView({ day }: { day: JournalDay }) {
                 key={card.id}
                 card={card}
                 position={positions[card.id] ?? { x: 0, y: 0 }}
-                isArchived={false}
                 userLabels={labels[card.id] ?? []}
                 onArchive={() => archiveCard(card.id)}
-                onUnarchive={() => {}}
-                onAddLabel={(label) => addLabel(card.id, label)}
-                onRemoveLabel={(label) => removeLabel(card.id, label)}
-              />
-            ))}
-            {archivedCards.map((card, i) => (
-              <DraggableCard
-                key={card.id}
-                card={card}
-                position={{
-                  x: archiveBaseX + i * 6,
-                  y: archiveBaseY + i * 6,
-                }}
-                isArchived={true}
-                userLabels={labels[card.id] ?? []}
-                onArchive={() => {}}
-                onUnarchive={() => unarchiveCard(card.id)}
                 onAddLabel={(label) => addLabel(card.id, label)}
                 onRemoveLabel={(label) => removeLabel(card.id, label)}
               />
@@ -197,6 +168,33 @@ export function BoardView({ day }: { day: JournalDay }) {
           </DndContext>
         )}
       </div>
+
+      {/* ── Dedicated Archive Zone ── */}
+      {archivedCards.length > 0 && (
+        <div className="board__archive">
+          <p className="board__archive-label">Archived</p>
+          <div className="board__archive-list">
+            {archivedCards.map((card) => (
+              <div key={card.id} className="archive-chip">
+                <div className="archive-chip__info">
+                  <span className="archive-chip__title">{card.title}</span>
+                  <span className="archive-chip__meta">
+                    {card.tempo.label} &middot; {card.tempo.messageCount} msgs
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="card-action-btn"
+                  onClick={() => unarchiveCard(card.id)}
+                  aria-label={`Restore ${card.title}`}
+                >
+                  restore
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
