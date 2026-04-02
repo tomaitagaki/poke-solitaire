@@ -61,8 +61,30 @@ export function BoardView({ day }: { day: JournalDay }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(1060);
   const [mounted, setMounted] = useState(false);
+  const [reclustering, setReclustering] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  async function handleRecluster() {
+    setReclustering(true);
+    try {
+      const res = await fetch('/api/recluster', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dayKey: day.dayKey }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        window.location.reload();
+      } else {
+        console.error('Recluster failed:', data.error);
+      }
+    } catch (e) {
+      console.error('Recluster failed:', e);
+    } finally {
+      setReclustering(false);
+    }
+  }
 
   const measureRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -150,6 +172,9 @@ export function BoardView({ day }: { day: JournalDay }) {
           <h2>{day.dayKey}</h2>
         </div>
         <div className="board__actions">
+          <button type="button" className="board__btn" onClick={handleRecluster} disabled={reclustering}>
+            {reclustering ? 'Clustering\u2026' : 'Recluster'}
+          </button>
           <button type="button" className="board__btn" onClick={resetLayout}>
             Reset layout
           </button>
