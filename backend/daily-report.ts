@@ -12,6 +12,13 @@ type PokeConversation = {
   messages: PokeMessage[];
 };
 
+type Tempo = {
+  label: 'slow' | 'steady' | 'rapid' | 'bursty';
+  avgGapMinutes: number | null;
+  spanMinutes: number;
+  messageCount: number;
+};
+
 type TopicCard = {
   kind: 'card';
   id: string;
@@ -22,6 +29,7 @@ type TopicCard = {
   sourceConversationIds: string[];
   interactionCount: number;
   labels: string[];
+  tempo: Tempo;
 };
 
 type OpenRouterTopicResponse = {
@@ -32,12 +40,25 @@ type OpenRouterTopicResponse = {
     state?: TopicCard['state'];
     sourceConversationIds: string[];
     labels?: string[];
+    tempo?: Partial<Tempo>;
   }>;
 };
 
 const DEFAULT_TIME_ZONE = process.env.POKE_TIME_ZONE ?? 'America/New_York';
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'meta-llama/llama-3.1-8b-instruct:free';
 const THREE_AM = 3;
+
+const SYSTEM_PROMPT = [
+  'You are a thread-untangling parser for Poke. Treat timestamps as a primary signal, not a minor hint.',
+  'Your job is to convert noisy, non-linear conversation history into tidy Solitaire stacks.',
+  'Atomic unit: a thread/task. A single message block may contain multiple atomic threads if the text shifts topic, intent, recipient, or time context.',
+  'Use timestamps to split, merge, and sequence discussion. Related items may reappear after time gaps; rejoin them when the semantic thread is clearly the same.',
+  'Detect context shifts such as a new request, a completion, a new recipient, a new date range, or a reply that changes subject.',
+  'Classify each thread as open or done. Done threads are archivable: the work is complete, confirmed, or closed out. Open threads still need follow-up, waiting, or unresolved action.',
+  'Respect the 3:00 AM cutoff. Anything at or after the cutoff belongs to today. Anything before it belongs to yesterday. If a conversation straddles the cutoff, split the timeline by timestamp and cluster each side separately when needed.',
+  'Prefer smaller, accurate stacks over one oversized stack that mixes unrelated timing or intent.',
+  'Return only valid JSON.',
+].join(' ');
 
 function startOfPokeDay(now = new Date()): Date {
   const cutoff = new Date(now);
@@ -68,12 +89,75 @@ async function fetchPokeConversationsSince(cutoffIso: string): Promise<PokeConve
   return (await response.json()) as PokeConversation[];
 }
 
+function flattenTimestamps(conversations: PokeConversation[]): number[] {
+  return conversations.flatMap((conversation) =>
+    conversation.messages
+      .map((message) => Date.parse(message.sentAt))
+      .filter((time) => Number.isFinite(time))
+  );
+}
+
+function computeTempo(messages: PokeMessage[]): Tempo {
+  const times = messages
+    .map((message) => Date.parse(message.sentAt))
+    .filter((time) => Number.isFinite(time))
+    .sort((a, b) => a - b);
+
+  if (times.length === 0) {
+    return {
+      label: 'slow',
+      avgGapMinutes: null,
+      spanMinutes: 0,
+      messageCount: messages.length,
+    };
+  }
+
+  const spanMinutes = Math.max(0, (times[times.length - 1] - times[0]) / 60000);
+
+  if (times.length === 1) {
+    return {
+      label: 'slow',
+      avgGapMinutes: null,
+      spanMinutes,
+      messageCount: messages.length,
+    };
+  }
+
+  const gaps = [] as number[];
+  for (let index = 1; index < times.length; index += 1) {
+    gaps.push((times[index] - times[index - 1]) / 60000);
+  }
+
+  const avgGapMinutes = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
+  const bursty = gaps.some((gap) => gap <= 5) && spanMinutes <= 45;
+
+  let label: Tempo['label'];
+  if (bursty) {
+    label = 'bursty';
+  } else if (avgGapMinutes <= 15) {
+    label = 'rapid';
+  } else if (avgGapMinutes <= 60) {
+    label = 'steady';
+  } else {
+    label = 'slow';
+  }
+
+  return {
+    label,
+    avgGapMinutes: Number(avgGapMinutes.toFixed(1)),
+    spanMinutes: Number(spanMinutes.toFixed(1)),
+    messageCount: messages.length,
+  };
+}
+
 async function parseTopicsWithOpenRouter(conversations: PokeConversation[]): Promise<OpenRouterTopicResponse> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY is required');
   }
 
+  const cutoffIso = startOfPokeDay().toISOString();
+  const conversationTimes = flattenTimestamps(conversations);
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -88,20 +172,22 @@ async function parseTopicsWithOpenRouter(conversations: PokeConversation[]): Pro
       messages: [
         {
           role: 'system',
-          content:
-            'You group Poke conversations into playful Solitaire cards. Cluster by topic, preserve the original daily context, and return only valid JSON with a cards array.',
+          content: SYSTEM_PROMPT,
         },
         {
           role: 'user',
           content: JSON.stringify({
             timezone: DEFAULT_TIME_ZONE,
-            instructions: [
-              'Create one card per topic cluster.',
-              'Each card should have topic, title, summary, optional state, sourceConversationIds, and optional labels.',
-              'Prefer compact summaries that read well in a web dashboard.',
-              'Use playful but readable language.',
+            cutoffIso,
+            groupingRules: [
+              'Use timestamps to detect when a thread starts, pauses, resumes, and ends.',
+              'If a message block contains multiple intents or topic jumps, split it into multiple atomic threads.',
+              'Cluster messages across time gaps when the topic, participants, or task continuity clearly match.',
+              'Mark a stack as archived when the thread appears complete, confirmed, closed, or safely handed off.',
+              'Mark a stack as active when follow-up is still expected or the outcome is unresolved.',
             ],
             conversations,
+            conversationTimes,
           }),
         },
       ],
@@ -129,8 +215,10 @@ function formatCardsForDashboard(parsed: OpenRouterTopicResponse, conversations:
       .map((conversationId) => byConversationId.get(conversationId))
       .filter((conversation): conversation is PokeConversation => Boolean(conversation));
 
-    const interactionCount = sourceConversations.reduce((count, conversation) => count + conversation.messages.length, 0);
+    const allMessages = sourceConversations.flatMap((conversation) => conversation.messages);
+    const interactionCount = allMessages.length;
     const safeId = (card.topic + '-' + index).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const tempo = card.tempo ?? computeTempo(allMessages);
 
     return {
       kind: 'card',
@@ -142,6 +230,7 @@ function formatCardsForDashboard(parsed: OpenRouterTopicResponse, conversations:
       sourceConversationIds: card.sourceConversationIds,
       interactionCount,
       labels: card.labels ?? ['solitaire', 'daily-report'],
+      tempo,
     };
   });
 }
