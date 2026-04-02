@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DndContext, PointerSensor, useDraggable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import type { JournalCard, JournalDay } from '../../shared/journal';
 import { useCanvasState, type Position } from '../lib/use-canvas-state';
 import { CardStack } from './CardStack';
@@ -28,9 +28,17 @@ function DraggableCard({
   onAddLabel: (label: string) => void;
   onRemoveLabel: (label: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({
     id: card.id,
   });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: card.id,
+  });
+
+  const combinedRef = useCallback((node: HTMLDivElement | null) => {
+    setDragRef(node);
+    setDropRef(node);
+  }, [setDragRef, setDropRef]);
 
   const style: React.CSSProperties = {
     position: 'absolute',
@@ -43,10 +51,12 @@ function DraggableCard({
     transition: isDragging ? 'none' : 'opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1)',
     willChange: isDragging ? 'transform' : undefined,
     cursor: isDragging ? 'grabbing' : 'grab',
+    outline: isOver && !isDragging ? '2px solid var(--color-accent)' : undefined,
+    outlineOffset: isOver && !isDragging ? '2px' : undefined,
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div ref={combinedRef} style={style} {...listeners} {...attributes}>
       <CardStack
         card={card}
         userLabels={userLabels}
