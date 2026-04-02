@@ -5,6 +5,7 @@ import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSe
 import type { JournalCard, JournalDay } from '../../shared/journal';
 import { useCanvasState, type Position } from '../lib/use-canvas-state';
 import { CardStack } from './CardStack';
+import { MergeDialog } from './MergeDialog';
 
 const CARD_WIDTH = 300;
 const CANVAS_PADDING_BOTTOM = 40;
@@ -40,6 +41,8 @@ function DraggableCard({
     setDropRef(node);
   }, [setDragRef, setDropRef]);
 
+  const showGlow = isOver && !isDragging;
+
   const style: React.CSSProperties = {
     position: 'absolute',
     left: position.x,
@@ -51,21 +54,21 @@ function DraggableCard({
     transition: isDragging ? 'none' : 'opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1)',
     willChange: isDragging ? 'transform' : undefined,
     cursor: isDragging ? 'grabbing' : 'grab',
-    outline: isOver && !isDragging ? '2px solid var(--color-accent)' : undefined,
-    outlineOffset: isOver && !isDragging ? '2px' : undefined,
   };
 
   return (
     <div ref={combinedRef} style={style} {...listeners} {...attributes}>
-      <CardStack
-        card={card}
-        userLabels={userLabels}
-        onArchive={onArchive}
-        onBringToFront={onBringToFront}
-        onAddLabel={onAddLabel}
-        onRemoveLabel={onRemoveLabel}
-        isDragging={isDragging}
-      />
+      <div className={`card-glow-wrap ${showGlow ? 'card-glow-wrap--active' : ''}`}>
+        <CardStack
+          card={card}
+          userLabels={userLabels}
+          onArchive={onArchive}
+          onBringToFront={onBringToFront}
+          onAddLabel={onAddLabel}
+          onRemoveLabel={onRemoveLabel}
+          isDragging={isDragging}
+        />
+      </div>
     </div>
   );
 }
@@ -75,6 +78,7 @@ export function BoardView({ day }: { day: JournalDay }) {
   const [containerWidth, setContainerWidth] = useState(1060);
   const [mounted, setMounted] = useState(false);
   const [reclustering, setReclustering] = useState(false);
+  const [mergePrompt, setMergePrompt] = useState<{ sourceId: string; targetId: string } | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -126,7 +130,6 @@ export function BoardView({ day }: { day: JournalDay }) {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
-  // Build effective cards list (apply merges)
   const mergedSourceIds = useMemo(() => {
     const ids = new Set<string>();
     for (const sources of Object.values(merges)) {
@@ -155,6 +158,9 @@ export function BoardView({ day }: { day: JournalDay }) {
   const activeCards = effectiveCards.filter((c) => !archived.includes(c.id));
   const archivedCards = effectiveCards.filter((c) => archived.includes(c.id));
 
+  // Pending merge delta — store so we can move the card if merge is cancelled
+  const pendingDelta = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over, delta } = event;
     const cardId = active.id as string;
@@ -162,13 +168,9 @@ export function BoardView({ day }: { day: JournalDay }) {
     if (!currentPos) return;
 
     if (over && over.id !== active.id) {
-      const confirmed = window.confirm(
-        `Merge \u201c${activeCards.find(c => c.id === active.id)?.title}\u201d into \u201c${activeCards.find(c => c.id === over.id)?.title}\u201d?`
-      );
-      if (confirmed) {
-        mergeCards(over.id as string, cardId);
-        return;
-      }
+      pendingDelta.current = delta;
+      setMergePrompt({ sourceId: cardId, targetId: over.id as string });
+      return;
     }
 
     moveCard(cardId, {
@@ -176,6 +178,28 @@ export function BoardView({ day }: { day: JournalDay }) {
       y: Math.max(0, currentPos.y + delta.y),
     });
   }
+
+  function handleMergeConfirm() {
+    if (!mergePrompt) return;
+    mergeCards(mergePrompt.targetId, mergePrompt.sourceId);
+    setMergePrompt(null);
+  }
+
+  function handleMergeCancel() {
+    if (!mergePrompt) return;
+    // Move the card to where it was dropped instead of snapping back
+    const currentPos = positions[mergePrompt.sourceId];
+    if (currentPos) {
+      moveCard(mergePrompt.sourceId, {
+        x: Math.max(0, currentPos.x + pendingDelta.current.x),
+        y: Math.max(0, currentPos.y + pendingDelta.current.y),
+      });
+    }
+    setMergePrompt(null);
+  }
+
+  const sourceCard = mergePrompt ? activeCards.find(c => c.id === mergePrompt.sourceId) : null;
+  const targetCard = mergePrompt ? activeCards.find(c => c.id === mergePrompt.targetId) : null;
 
   return (
     <section className="board">
@@ -216,7 +240,6 @@ export function BoardView({ day }: { day: JournalDay }) {
         )}
       </div>
 
-      {/* ── Dedicated Archive Zone ── */}
       {archivedCards.length > 0 && (
         <div className="board__archive">
           <p className="board__archive-label">Archived</p>
@@ -241,6 +264,15 @@ export function BoardView({ day }: { day: JournalDay }) {
             ))}
           </div>
         </div>
+      )}
+
+      {mergePrompt && sourceCard && targetCard && (
+        <MergeDialog
+          sourceTitle={sourceCard.title}
+          targetTitle={targetCard.title}
+          onConfirm={handleMergeConfirm}
+          onCancel={handleMergeCancel}
+        />
       )}
     </section>
   );

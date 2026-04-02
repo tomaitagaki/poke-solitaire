@@ -518,6 +518,149 @@ h1, h2, h3 {
   }
 }
 
+/* ── Drop target glow ── */
+
+.card-glow-wrap {
+  position: relative;
+  border-radius: var(--radius-md);
+}
+
+.card-glow-wrap--active {
+  z-index: 50;
+}
+
+.card-glow-wrap--active::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(var(--radius-md) + 4px);
+  background: conic-gradient(
+    from 0deg,
+    rgba(138, 108, 70, 0.5),
+    rgba(200, 160, 90, 0.7),
+    rgba(255, 220, 140, 0.5),
+    rgba(200, 160, 90, 0.7),
+    rgba(138, 108, 70, 0.5)
+  );
+  animation: glow-spin 2s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.card-glow-wrap--active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  z-index: -1;
+}
+
+@keyframes glow-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Merge dialog ── */
+
+.merge-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 29, 26, 0.3);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fade-in 150ms var(--ease-out-quart);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.merge-dialog {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px var(--color-border-strong),
+    0 24px 64px rgba(31, 29, 26, 0.2);
+  padding: 24px;
+  max-width: 380px;
+  width: 90%;
+  animation: dialog-in 200ms var(--ease-out-quart);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.merge-dialog__title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.merge-dialog__body {
+  margin: 0 0 20px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.merge-dialog__body strong {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.merge-dialog__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.merge-dialog__btn {
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  min-height: 40px;
+  transition: background 150ms ease;
+}
+
+.merge-dialog__btn--cancel {
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.merge-dialog__btn--confirm {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.merge-dialog__btn:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .merge-dialog__btn--cancel:hover {
+    background: var(--color-accent-bg);
+  }
+  .merge-dialog__btn--confirm:hover {
+    background: var(--color-accent-deep);
+  }
+}
+
 /* ── Reduced motion ── */
 
 @media (prefers-reduced-motion: reduce) {
