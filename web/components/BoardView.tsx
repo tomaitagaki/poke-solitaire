@@ -1,3 +1,5 @@
+'use client';
+
 import type { JournalDay } from '../../shared/journal';
 import { CardStack } from './CardStack';
 
