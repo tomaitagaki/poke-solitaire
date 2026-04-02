@@ -20,12 +20,13 @@ function storageKey(dayKey: string): string {
 }
 
 function loadState(dayKey: string): CanvasState {
-  if (typeof window === 'undefined') return { positions: {}, archived: [], labels: {}, merges: {}, interactionOrder: [] };
+  const empty: CanvasState = { positions: {}, archived: [], labels: {}, merges: {}, interactionOrder: [] };
+  if (typeof window === 'undefined') return empty;
   try {
     const raw = localStorage.getItem(storageKey(dayKey));
-    if (raw) return JSON.parse(raw);
+    if (raw) return { ...empty, ...JSON.parse(raw) };
   } catch {}
-  return { positions: {}, archived: [], labels: {}, merges: {}, interactionOrder: [] };
+  return empty;
 }
 
 function saveState(dayKey: string, state: CanvasState) {
