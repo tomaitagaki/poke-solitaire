@@ -539,14 +539,8 @@ h1, h2, h3 {
   background: var(--color-accent);
 }
 
-.card-action-btn--primary {
-  background: var(--color-accent);
-  color: #fff;
-  box-shadow: none;
-}
-
-.card-action-btn--primary:disabled {
-  opacity: 0.4;
+.card-action-btn:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
 

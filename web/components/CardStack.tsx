@@ -200,7 +200,7 @@ export function CardStack({
             <>
               <button
                 type="button"
-                className="card-action-btn card-action-btn--primary"
+                className="card-action-btn"
                 disabled={selected.size === 0}
                 onClick={() => {
                   if (selected.size === 0 || !onSplitAt) return;
