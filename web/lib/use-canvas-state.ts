@@ -10,6 +10,7 @@ export type CanvasState = {
   archived: string[];
   labels: Record<string, string[]>;
   merges: Record<string, string[]>;
+  interactionOrder: string[];
 };
 
 const STORAGE_PREFIX = 'poke-canvas-';
@@ -19,12 +20,12 @@ function storageKey(dayKey: string): string {
 }
 
 function loadState(dayKey: string): CanvasState {
-  if (typeof window === 'undefined') return { positions: {}, archived: [], labels: {}, merges: {} };
+  if (typeof window === 'undefined') return { positions: {}, archived: [], labels: {}, merges: {}, interactionOrder: [] };
   try {
     const raw = localStorage.getItem(storageKey(dayKey));
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { positions: {}, archived: [], labels: {}, merges: {} };
+  return { positions: {}, archived: [], labels: {}, merges: {}, interactionOrder: [] };
 }
 
 function saveState(dayKey: string, state: CanvasState) {
@@ -54,7 +55,7 @@ export function computeSolitaireLayout(cards: JournalCard[], containerWidth: num
   return positions;
 }
 
-const EMPTY_STATE: CanvasState = { positions: {}, archived: [], labels: {}, merges: {} };
+const EMPTY_STATE: CanvasState = { positions: {}, archived: [], labels: {}, merges: {}, interactionOrder: [] };
 
 export function useCanvasState(dayKey: string, cards: JournalCard[], containerWidth: number) {
   const [state, setState] = useState<CanvasState>(EMPTY_STATE);
@@ -73,10 +74,18 @@ export function useCanvasState(dayKey: string, cards: JournalCard[], containerWi
   const solitairePositions = computeSolitaireLayout(cards, containerWidth);
   const positions = { ...solitairePositions, ...state.positions };
 
+  const bringToFront = useCallback((cardId: string) => {
+    setState((prev) => ({
+      ...prev,
+      interactionOrder: [...prev.interactionOrder.filter((id) => id !== cardId), cardId],
+    }));
+  }, []);
+
   const moveCard = useCallback((cardId: string, pos: Position) => {
     setState((prev) => ({
       ...prev,
       positions: { ...prev.positions, [cardId]: pos },
+      interactionOrder: [...prev.interactionOrder.filter((id) => id !== cardId), cardId],
     }));
   }, []);
 
@@ -127,7 +136,9 @@ export function useCanvasState(dayKey: string, cards: JournalCard[], containerWi
     archived: state.archived,
     labels: state.labels,
     merges: state.merges,
+    interactionOrder: state.interactionOrder,
     moveCard,
+    bringToFront,
     resetLayout,
     archiveCard,
     unarchiveCard,

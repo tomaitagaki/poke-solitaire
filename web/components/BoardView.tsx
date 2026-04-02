@@ -12,6 +12,7 @@ const CANVAS_PADDING_BOTTOM = 40;
 function DraggableCard({
   card,
   position,
+  zIndex,
   userLabels,
   onArchive,
   onAddLabel,
@@ -19,6 +20,7 @@ function DraggableCard({
 }: {
   card: JournalCard;
   position: Position;
+  zIndex: number;
   userLabels: string[];
   onArchive: () => void;
   onAddLabel: (label: string) => void;
@@ -34,7 +36,7 @@ function DraggableCard({
     top: position.y,
     width: CARD_WIDTH,
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    zIndex: isDragging ? 100 : 1,
+    zIndex: isDragging ? 100 : zIndex,
     opacity: isDragging ? 0.85 : 1,
     transition: isDragging ? 'none' : 'opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1)',
     willChange: isDragging ? 'transform' : undefined,
@@ -74,7 +76,9 @@ export function BoardView({ day }: { day: JournalDay }) {
     archived,
     labels,
     merges,
+    interactionOrder,
     moveCard,
+    bringToFront,
     resetLayout,
     archiveCard,
     unarchiveCard,
@@ -162,9 +166,10 @@ export function BoardView({ day }: { day: JournalDay }) {
                 key={card.id}
                 card={card}
                 position={positions[card.id] ?? { x: 0, y: 0 }}
+                zIndex={interactionOrder.indexOf(card.id) + 2}
                 userLabels={labels[card.id] ?? []}
-                onArchive={() => archiveCard(card.id)}
-                onAddLabel={(label) => addLabel(card.id, label)}
+                onArchive={() => { bringToFront(card.id); archiveCard(card.id); }}
+                onAddLabel={(label) => { bringToFront(card.id); addLabel(card.id, label); }}
                 onRemoveLabel={(label) => removeLabel(card.id, label)}
               />
             ))}

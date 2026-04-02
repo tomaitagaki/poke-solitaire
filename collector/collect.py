@@ -62,7 +62,7 @@ def extract_text(attributed_body: bytes | None, text: str | None) -> str:
 
 
 def cluster_by_time_gap(records: list[dict], gap_minutes: int = TIME_GAP_MINUTES) -> list[list[dict]]:
-    """Group records into clusters separated by time gaps."""
+    """Group records into rough clusters separated by time gaps (pre-LLM pass)."""
     if not records:
         return []
     clusters: list[list[dict]] = []
@@ -78,6 +78,79 @@ def cluster_by_time_gap(records: list[dict], gap_minutes: int = TIME_GAP_MINUTES
     if current:
         clusters.append(current)
     return clusters
+
+
+def cluster_by_topic(records: list[dict]) -> list[list[dict]]:
+    """Use LLM to segment messages by topic. Falls back to time-gap clustering."""
+    if not OPENROUTER_API_KEY or len(records) == 0:
+        return cluster_by_time_gap(records)
+
+    # Group by day first, then LLM-segment each day
+    days: dict[str, list[dict]] = {}
+    for rec in records:
+        day = rec["sentAt"][:10]
+        days.setdefault(day, []).append(rec)
+
+    all_clusters: list[list[dict]] = []
+
+    for day_key, day_records in sorted(days.items()):
+        # For small days, time-gap is fine
+        if len(day_records) <= 5:
+            all_clusters.extend(cluster_by_time_gap(day_records))
+            continue
+
+        # Build numbered message list for LLM
+        msg_lines = []
+        for i, m in enumerate(day_records):
+            time_str = m["sentAt"][11:16]
+            text_preview = m["text"][:120].replace("\n", " ")
+            msg_lines.append(f"{i}: [{time_str}] {m['sender']}: {text_preview}")
+
+        prompt = f"""You are segmenting a day of messages between "me" and "poke" into distinct conversation topics.
+
+Messages for {day_key} ({len(day_records)} total):
+{chr(10).join(msg_lines)}
+
+Group these message indices by topic. Each group should be ONE coherent topic — not two topics joined with "and".
+Time gaps are a hint but topic shifts matter more. A rapid back-and-forth on one topic is one group even if it spans hours.
+
+Return ONLY a JSON array of objects, each with:
+- "indices": array of message index numbers belonging to this topic
+- "title": short title (3-6 words, ONE topic, no "and")
+
+Example: [{{"indices": [0,1,2], "title": "GitHub token renewal"}}, {{"indices": [3,4,5,6], "title": "Tweet draft feedback"}}]"""
+
+        try:
+            content = _call_openrouter(prompt, max_tokens=1024)
+            cleaned = content.replace("```json", "").replace("```", "").strip()
+            groups = json.loads(cleaned)
+
+            if not isinstance(groups, list):
+                raise ValueError("Expected array")
+
+            for group in groups:
+                indices = group.get("indices", [])
+                title = str(group.get("title", ""))[:80]
+                cluster_msgs = [day_records[i] for i in indices if 0 <= i < len(day_records)]
+                if cluster_msgs:
+                    for msg in cluster_msgs:
+                        msg["subject"] = title
+                    all_clusters.append(cluster_msgs)
+
+            # Check for any orphaned messages not assigned to a group
+            assigned = set()
+            for group in groups:
+                assigned.update(group.get("indices", []))
+            orphans = [day_records[i] for i in range(len(day_records)) if i not in assigned]
+            if orphans:
+                # Fall back to time-gap for orphans
+                all_clusters.extend(cluster_by_time_gap(orphans))
+
+        except Exception as e:
+            print(f"  Topic clustering failed for {day_key}: {e}, falling back to time-gap")
+            all_clusters.extend(cluster_by_time_gap(day_records))
+
+    return all_clusters
 
 
 def _call_openrouter(prompt: str, max_tokens: int = 512) -> str:
@@ -202,22 +275,26 @@ def main():
     conn.close()
     print(f"Read {len(records)} messages")
 
-    # Cluster by time gaps and generate titles
-    clusters = cluster_by_time_gap(records)
-    print(f"Formed {len(clusters)} clusters, generating titles...")
-    titles = generate_titles(clusters)
+    # Cluster by topic (LLM) — assigns subject to each message
+    print("Clustering by topic...")
+    clusters = cluster_by_topic(records)
 
-    # Assign titles back as subject on each message in the cluster
-    for cluster, title in zip(clusters, titles):
-        for msg in cluster:
-            msg["subject"] = title
+    # For clusters that don't have subjects yet (fallback path), generate titles
+    untitled = [c for c in clusters if not c[0].get("subject")]
+    if untitled:
+        print(f"Generating titles for {len(untitled)} untitled clusters...")
+        titles = generate_titles(untitled)
+        for cluster, title in zip(untitled, titles):
+            for msg in cluster:
+                msg["subject"] = title
 
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
     with open(SNAPSHOT_PATH, "w") as f:
         json.dump(records, f, indent=2)
 
     print(f"Wrote {len(records)} messages to {SNAPSHOT_PATH}")
-    for i, (cluster, title) in enumerate(zip(clusters, titles)):
+    for cluster in clusters:
+        title = cluster[0].get("subject", "Untitled")
         print(f"  [{len(cluster):3d} msgs] {title}")
 
 
