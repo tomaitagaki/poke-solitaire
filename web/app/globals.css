@@ -51,7 +51,8 @@ body {
 }
 
 .board,
-.highlights {
+.highlights,
+.pager {
   margin-top: 24px;
   padding: 20px;
   background: rgba(255, 255, 255, 0.55);
@@ -62,11 +63,31 @@ body {
 
 .board__header,
 .highlights__header,
-.card-stack__header {
+.card-stack__header,
+.pager__header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
+}
+
+.pager__controls {
+  display: flex;
+  gap: 10px;
+}
+
+.pager__controls button {
+  border: 1px solid rgba(79, 55, 26, 0.12);
+  background: #fffaf2;
+  color: #1f1d1a;
+  border-radius: 999px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.pager__controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .board__stacks,
