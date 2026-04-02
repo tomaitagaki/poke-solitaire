@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""Collect messages from chat.db for a single contact, write journal-snapshot.json."""
+"""Collect messages from chat.db for a single contact, write journal-snapshot.json.
+
+Groups messages into time-gap clusters (45 min) and generates short titles
+for each cluster via OpenRouter (Gemini Flash).
+"""
 
 import json
 import os
 import re
 import sqlite3
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 CHAT_IDENTIFIER = os.environ.get("POKE_CHAT_ID", "")
 if not CHAT_IDENTIFIER:
@@ -19,6 +23,8 @@ SNAPSHOT_PATH = os.path.expanduser(
         "~/Library/Application Support/PokeSolitaire/journal-snapshot.json",
     )
 )
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+TIME_GAP_MINUTES = 45
 
 APPLE_EPOCH = datetime(2001, 1, 1, tzinfo=timezone.utc)
 
@@ -30,39 +36,109 @@ def extract_text(attributed_body: bytes | None, text: str | None) -> str:
     if not attributed_body:
         return ""
     try:
-        # typedstream: find the text payload after the \x01+<length> marker
-        # Pattern: 0x01 0x2B (<length bytes>) <UTF-8 text> 0x86 ...
-        # The text block starts after \x01+ and length prefix, ends before \x86 or \x06
         idx = attributed_body.find(b'\x01\x2b')
         if idx < 0:
             return ""
-        # Skip \x01\x2b and the length byte(s)
         start = idx + 2
-        # The next byte(s) are length encoding; skip them
-        # If high bit set, multi-byte length; otherwise single byte
         if start >= len(attributed_body):
             return ""
         length_byte = attributed_body[start]
         if length_byte & 0x80:
-            # Multi-byte: skip 2 length bytes
             start += 2
         else:
             start += 1
-        # Some messages have an additional control byte
         if start < len(attributed_body) and attributed_body[start] < 0x20:
             start += 1
-        # Find end of text: look for \x86 or \x06 markers
         end = len(attributed_body)
         for marker in [b'\x86', b'\x06']:
             pos = attributed_body.find(marker, start)
             if pos > start:
                 end = min(end, pos)
         raw_text = attributed_body[start:end]
-        decoded = raw_text.decode('utf-8', errors='ignore').strip()
-        return decoded
+        return raw_text.decode('utf-8', errors='ignore').strip()
     except Exception:
         pass
     return ""
+
+
+def cluster_by_time_gap(records: list[dict], gap_minutes: int = TIME_GAP_MINUTES) -> list[list[dict]]:
+    """Group records into clusters separated by time gaps."""
+    if not records:
+        return []
+    clusters: list[list[dict]] = []
+    current: list[dict] = [records[0]]
+    for rec in records[1:]:
+        prev_time = datetime.fromisoformat(current[-1]["sentAt"])
+        curr_time = datetime.fromisoformat(rec["sentAt"])
+        if (curr_time - prev_time).total_seconds() > gap_minutes * 60:
+            clusters.append(current)
+            current = [rec]
+        else:
+            current.append(rec)
+    if current:
+        clusters.append(current)
+    return clusters
+
+
+def _call_openrouter(prompt: str, max_tokens: int = 512) -> str:
+    import urllib.request
+    req = urllib.request.Request(
+        "https://openrouter.ai/api/v1/chat/completions",
+        data=json.dumps({
+            "model": "google/gemini-2.0-flash-001",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": max_tokens,
+        }).encode(),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.loads(resp.read())
+    return data["choices"][0]["message"]["content"]
+
+
+def _describe_cluster(cluster: list[dict], index: int) -> str:
+    msgs = []
+    for m in cluster[:10]:
+        msgs.append(f"  [{m['sender']}]: {m['text'][:150]}")
+    return f"Cluster {index+1} ({len(cluster)} msgs):\n" + "\n".join(msgs)
+
+
+def generate_titles(clusters: list[list[dict]]) -> list[str]:
+    """Generate short titles for each cluster via OpenRouter, in batches."""
+    if not OPENROUTER_API_KEY:
+        print("  No OPENROUTER_API_KEY — using first-message fallback for titles")
+        return [c[0]["text"].split("\n")[0][:60] for c in clusters]
+
+    BATCH_SIZE = 10
+    all_titles: list[str] = []
+
+    for batch_start in range(0, len(clusters), BATCH_SIZE):
+        batch = clusters[batch_start:batch_start + BATCH_SIZE]
+        descriptions = [_describe_cluster(c, batch_start + i) for i, c in enumerate(batch)]
+
+        prompt = f"""Generate a short title (3-7 words) for each conversation cluster.
+Capture the main topic — like a subject line. Be specific, not generic.
+Return ONLY a JSON array of {len(batch)} strings. No other text.
+
+{chr(10).join(descriptions)}"""
+
+        try:
+            content = _call_openrouter(prompt)
+            cleaned = content.replace("```json", "").replace("```", "").strip()
+            titles = json.loads(cleaned)
+            if isinstance(titles, list) and len(titles) == len(batch):
+                all_titles.extend(str(t)[:80] for t in titles)
+                continue
+            print(f"  Batch {batch_start//BATCH_SIZE}: count mismatch, using fallback")
+        except Exception as e:
+            print(f"  Batch {batch_start//BATCH_SIZE} failed: {e}, using fallback")
+
+        all_titles.extend(c[0]["text"].split("\n")[0][:60] for c in batch)
+
+    return all_titles
 
 
 def main():
@@ -74,8 +150,6 @@ def main():
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
 
-    # Calculate cutoff: DAYS_BACK days ago in Apple nanoseconds
-    from datetime import timedelta
     cutoff = datetime.now(tz=timezone.utc) - timedelta(days=DAYS_BACK)
     cutoff_ns = int((cutoff.timestamp() - APPLE_EPOCH.timestamp()) * 1_000_000_000)
 
@@ -106,7 +180,6 @@ def main():
             continue
 
         date_raw = row["date_raw"]
-        # macOS timestamp: nanoseconds since 2001-01-01
         if date_raw and date_raw > 0:
             ts = APPLE_EPOCH.timestamp() + (date_raw / 1_000_000_000)
             sent_at = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
@@ -127,12 +200,25 @@ def main():
         })
 
     conn.close()
+    print(f"Read {len(records)} messages")
+
+    # Cluster by time gaps and generate titles
+    clusters = cluster_by_time_gap(records)
+    print(f"Formed {len(clusters)} clusters, generating titles...")
+    titles = generate_titles(clusters)
+
+    # Assign titles back as subject on each message in the cluster
+    for cluster, title in zip(clusters, titles):
+        for msg in cluster:
+            msg["subject"] = title
 
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)
     with open(SNAPSHOT_PATH, "w") as f:
         json.dump(records, f, indent=2)
 
     print(f"Wrote {len(records)} messages to {SNAPSHOT_PATH}")
+    for i, (cluster, title) in enumerate(zip(clusters, titles)):
+        print(f"  [{len(cluster):3d} msgs] {title}")
 
 
 if __name__ == "__main__":

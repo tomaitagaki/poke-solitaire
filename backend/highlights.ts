@@ -37,7 +37,7 @@ async function callOpenRouter(prompt: string): Promise<string> {
       Authorization: `Bearer ${OPENROUTER_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'anthropic/claude-sonnet-4',
+      model: 'google/gemini-2.0-flash-001',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 1024,
     }),
