@@ -44,6 +44,7 @@ type CardStackProps = {
   onAddLabel?: (label: string) => void;
   onRemoveLabel?: (label: string) => void;
   onBringToFront?: () => void;
+  onSplitAt?: (messageIndex: number) => void;
   isDragging?: boolean;
 };
 
@@ -56,6 +57,7 @@ export function CardStack({
   onAddLabel,
   onRemoveLabel,
   onBringToFront,
+  onSplitAt,
   isDragging = false,
 }: CardStackProps) {
   const [expanded, setExpanded] = useState(false);
@@ -154,17 +156,30 @@ export function CardStack({
             {card.messages.map((msg, i) => {
               const isMe = msg.sender === 'me';
               return (
-                <div
-                  key={msg.id}
-                  className={`card-stack__message ${isMe ? 'card-stack__message--me' : 'card-stack__message--poke'}`}
-                  style={{
-                    '--fan-index': i,
-                    '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
-                    '--fan-offset-y': `${FAN.offsetY}px`,
-                  } as React.CSSProperties}
-                >
-                  <p className="card-stack__message-text">{msg.text}</p>
-                  <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
+                <div key={msg.id}>
+                  {i > 0 && onSplitAt && card.messages.length > 1 && (
+                    <button
+                      type="button"
+                      className="split-divider"
+                      onClick={(e) => { e.stopPropagation(); onSplitAt(i); }}
+                      aria-label={`Split stack before this message`}
+                    >
+                      <span className="split-divider__line" />
+                      <span className="split-divider__label">split here</span>
+                      <span className="split-divider__line" />
+                    </button>
+                  )}
+                  <div
+                    className={`card-stack__message ${isMe ? 'card-stack__message--me' : 'card-stack__message--poke'}`}
+                    style={{
+                      '--fan-index': i,
+                      '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
+                      '--fan-offset-y': `${FAN.offsetY}px`,
+                    } as React.CSSProperties}
+                  >
+                    <p className="card-stack__message-text">{msg.text}</p>
+                    <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
+                  </div>
                 </div>
               );
             })}

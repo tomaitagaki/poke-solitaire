@@ -17,6 +17,7 @@ function DraggableCard({
   userLabels,
   onArchive,
   onBringToFront,
+  onSplitAt,
   onAddLabel,
   onRemoveLabel,
 }: {
@@ -26,6 +27,7 @@ function DraggableCard({
   userLabels: string[];
   onArchive: () => void;
   onBringToFront: () => void;
+  onSplitAt: (messageIndex: number) => void;
   onAddLabel: (label: string) => void;
   onRemoveLabel: (label: string) => void;
 }) {
@@ -64,6 +66,7 @@ function DraggableCard({
           userLabels={userLabels}
           onArchive={onArchive}
           onBringToFront={onBringToFront}
+          onSplitAt={onSplitAt}
           onAddLabel={onAddLabel}
           onRemoveLabel={onRemoveLabel}
           isDragging={isDragging}
@@ -232,6 +235,22 @@ export function BoardView({ day }: { day: JournalDay }) {
                 userLabels={labels[card.id] ?? []}
                 onArchive={() => { bringToFront(card.id); archiveCard(card.id); }}
                 onBringToFront={() => bringToFront(card.id)}
+                onSplitAt={async (msgIndex) => {
+                  const messageId = card.messages[msgIndex]?.id;
+                  if (!messageId) return;
+                  try {
+                    const res = await fetch('/api/split', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ cardId: card.id, splitAtMessageId: messageId }),
+                    });
+                    const data = await res.json();
+                    if (data.ok) window.location.reload();
+                    else console.error('Split failed:', data.error);
+                  } catch (e) {
+                    console.error('Split failed:', e);
+                  }
+                }}
                 onAddLabel={(label) => { bringToFront(card.id); addLabel(card.id, label); }}
                 onRemoveLabel={(label) => removeLabel(card.id, label)}
               />
