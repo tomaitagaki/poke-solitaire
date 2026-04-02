@@ -172,7 +172,7 @@ h1, h2, h3 {
   box-shadow: 0 0 0 1px var(--color-border);
   border: none;
   border-radius: var(--radius-md);
-  padding: 18px;
+  padding: 14px;
   cursor: pointer;
   user-select: none;
   transition:
@@ -228,27 +228,32 @@ h1, h2, h3 {
 .card-stack__messages {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 12px;
+  gap: 4px;
+  margin-top: 10px;
   max-height: 400px;
   overflow-y: auto;
 }
 
 .card-stack__message {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: 8px;
-  align-items: baseline;
-  padding: 10px 12px;
-  background: rgba(246, 241, 232, 0.6);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 0 0 1px rgba(79, 55, 26, 0.04);
+  padding: 6px 10px;
+  border-radius: 10px;
+  border-left: 3px solid transparent;
 
   /* Fan-in animation */
   opacity: 0;
   transform: translateY(var(--fan-offset-y, -6px));
   animation: fan-in 250ms var(--ease-out-quart) forwards;
   animation-delay: var(--fan-delay, 0ms);
+}
+
+.card-stack__message--me {
+  border-left-color: var(--color-accent);
+  background: rgba(138, 108, 70, 0.06);
+}
+
+.card-stack__message--poke {
+  border-left-color: #7a9b6d;
+  background: rgba(122, 155, 109, 0.06);
 }
 
 @keyframes fan-in {
@@ -258,24 +263,35 @@ h1, h2, h3 {
   }
 }
 
-.card-stack__message-time {
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-accent);
-  white-space: nowrap;
-}
-
-.card-stack__message-sender {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
 .card-stack__message-text {
   margin: 0;
   color: var(--color-text);
-  line-height: 1.45;
-  font-size: 0.92rem;
+  line-height: 1.4;
+  font-size: 0.88rem;
+}
+
+.card-stack__message-time {
+  display: block;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-faint);
+  margin-top: 2px;
+}
+
+/* ── Drag handle ── */
+
+.card-stack__title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.card-stack__grip {
+  color: var(--color-text-faint);
+  font-size: 1rem;
+  line-height: 1.4;
+  opacity: 0.4;
+  cursor: grab;
 }
 
 /* ── Labels ── */

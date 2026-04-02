@@ -1,6 +1,11 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { buildJournalDays, type JournalDay, type MessageRow } from '../../shared/journal';
+
+function expandHome(p: string): string {
+  return p.startsWith('~') ? path.join(os.homedir(), p.slice(1)) : p;
+}
 
 export type HighlightSuggestion = {
   cardId: string;
@@ -44,7 +49,7 @@ export async function loadLocalJournalDays(): Promise<JournalDay[]> {
   }
 
   try {
-    const absolutePath = path.resolve(snapshotPath);
+    const absolutePath = path.resolve(expandHome(snapshotPath));
     const content = await fs.readFile(absolutePath, 'utf8');
     const rows = JSON.parse(content) as MessageRow[];
     return buildJournalDays(rows);
@@ -60,7 +65,7 @@ export async function loadHighlights(): Promise<HighlightsData> {
   }
 
   try {
-    const absolutePath = path.resolve(highlightsPath);
+    const absolutePath = path.resolve(expandHome(highlightsPath));
     const content = await fs.readFile(absolutePath, 'utf8');
     return JSON.parse(content) as HighlightsData;
   } catch {

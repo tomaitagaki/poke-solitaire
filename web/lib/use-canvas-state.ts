@@ -32,9 +32,9 @@ function saveState(dayKey: string, state: CanvasState) {
   localStorage.setItem(storageKey(dayKey), JSON.stringify(state));
 }
 
-const CARD_WIDTH = 320;
-const CARD_GAP = 16;
-const COLUMN_GAP = 16;
+const CARD_WIDTH = 300;
+const CARD_GAP = 14;
+const COLUMN_GAP = 14;
 const HEADER_OFFSET = 0;
 
 export function computeSolitaireLayout(cards: JournalCard[], containerWidth: number): Record<string, Position> {
@@ -48,7 +48,7 @@ export function computeSolitaireLayout(cards: JournalCard[], containerWidth: num
       x: col * (CARD_WIDTH + COLUMN_GAP),
       y: columnHeights[col],
     };
-    columnHeights[col] += 180 + CARD_GAP;
+    columnHeights[col] += 240 + CARD_GAP;
   }
 
   return positions;

@@ -64,7 +64,9 @@ function topicFromRow(row: MessageRow): string {
   if (row.subject?.trim()) return normalizeText(row.subject);
   if (row.conversationId?.trim()) return `Conversation ${row.conversationId}`;
   if (row.threadId?.trim()) return `Thread ${row.threadId}`;
-  return 'Untitled stack';
+  // Use first few words of the message text as the title
+  const words = normalizeText(row.text).split(' ').slice(0, 6).join(' ');
+  return words || 'Untitled stack';
 }
 
 function makeCardId(topic: string, dayKey: string, index: number): string {

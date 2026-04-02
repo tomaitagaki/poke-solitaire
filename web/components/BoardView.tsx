@@ -6,8 +6,8 @@ import type { JournalCard, JournalDay } from '../../shared/journal';
 import { useCanvasState, type Position } from '../lib/use-canvas-state';
 import { CardStack } from './CardStack';
 
-const CARD_WIDTH = 320;
-const CANVAS_MIN_HEIGHT = 480;
+const CARD_WIDTH = 300;
+const CANVAS_PADDING_BOTTOM = 40;
 
 function DraggableCard({
   card,
@@ -37,18 +37,18 @@ function DraggableCard({
     zIndex: isDragging ? 100 : 1,
     opacity: isDragging ? 0.85 : 1,
     transition: isDragging ? 'none' : 'opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1)',
-    cursor: 'grab',
     willChange: isDragging ? 'transform' : undefined,
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div ref={setNodeRef} style={style} {...attributes}>
       <CardStack
         card={card}
         userLabels={userLabels}
         onArchive={onArchive}
         onAddLabel={onAddLabel}
         onRemoveLabel={onRemoveLabel}
+        dragListeners={listeners}
       />
     </div>
   );
@@ -151,7 +151,9 @@ export function BoardView({ day }: { day: JournalDay }) {
         </div>
       </header>
 
-      <div ref={measureRef} className="board__canvas" style={{ minHeight: CANVAS_MIN_HEIGHT }}>
+      <div ref={measureRef} className="board__canvas" style={{
+        minHeight: Math.max(300, ...activeCards.map((c) => (positions[c.id]?.y ?? 0) + 260)) + CANVAS_PADDING_BOTTOM,
+      }}>
         {mounted && (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             {activeCards.map((card) => (

@@ -16,20 +16,26 @@ final class ChatDBCollector {
     private let sourcePath: String
     private let storePath: String
     private let snapshotPath: String
+    private let chatIdentifier: String
 
     init(
         sourcePath: String = NSHomeDirectory() + "/Library/Messages/chat.db",
         storePath: String = NSHomeDirectory() + "/Library/Application Support/PokeSolitaire/journal.sqlite",
-        snapshotPath: String = NSHomeDirectory() + "/Library/Application Support/PokeSolitaire/journal-snapshot.json"
+        snapshotPath: String = NSHomeDirectory() + "/Library/Application Support/PokeSolitaire/journal-snapshot.json",
+        chatIdentifier: String? = ProcessInfo.processInfo.environment["POKE_CHAT_ID"]
     ) {
         self.sourcePath = sourcePath
         self.storePath = storePath
         self.snapshotPath = snapshotPath
+        guard let id = chatIdentifier, !id.isEmpty else {
+            fatalError("Set POKE_CHAT_ID env var to the iMessage chat identifier for Poke")
+        }
+        self.chatIdentifier = id
     }
 
     func run() throws {
         let records = try readMessages()
-        try writeSQLiteStore(records)
+        print("Read \(records.count) messages from chat.db")
         try writeSnapshot(records)
     }
 
@@ -50,9 +56,12 @@ final class ChatDBCollector {
           handle.id,
           chat.display_name
         FROM message
-        LEFT JOIN chat_message_join ON chat_message_join.message_id = message.ROWID
-        LEFT JOIN chat ON chat.ROWID = chat_message_join.chat_id
+        JOIN chat_message_join ON chat_message_join.message_id = message.ROWID
+        JOIN chat ON chat.ROWID = chat_message_join.chat_id
         LEFT JOIN handle ON handle.ROWID = message.handle_id
+        WHERE chat.chat_identifier = '\(chatIdentifier)'
+          AND message.text IS NOT NULL
+          AND message.text != ''
         ORDER BY message.date ASC
         """
 
@@ -130,15 +139,15 @@ final class ChatDBCollector {
         defer { sqlite3_finalize(statement) }
 
         for record in records {
-            sqlite3_bind_text(statement, 1, record.id, -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(statement, 2, record.threadId ?? "", -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(statement, 3, record.conversationId ?? "", -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(statement, 4, record.subject ?? "", -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(statement, 5, record.text, -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(statement, 6, record.sentAt, -1, SQLITE_TRANSIENT)
-            sqlite3_bind_text(statement, 7, record.sender ?? "", -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(statement, 1, record.id, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            sqlite3_bind_text(statement, 2, record.threadId ?? "", -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            sqlite3_bind_text(statement, 3, record.conversationId ?? "", -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            sqlite3_bind_text(statement, 4, record.subject ?? "", -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            sqlite3_bind_text(statement, 5, record.text, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            sqlite3_bind_text(statement, 6, record.sentAt, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            sqlite3_bind_text(statement, 7, record.sender ?? "", -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
             let recipients = (try? String(data: JSONEncoder().encode(record.recipients), encoding: .utf8)) ?? "[]"
-            sqlite3_bind_text(statement, 8, recipients, -1, SQLITE_TRANSIENT)
+            sqlite3_bind_text(statement, 8, recipients, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
 
             if sqlite3_step(statement) != SQLITE_DONE {
                 throw NSError(domain: "ChatDBCollector", code: 6, userInfo: [NSLocalizedDescriptionKey: "Unable to insert journal message"])
@@ -158,14 +167,10 @@ final class ChatDBCollector {
     }
 }
 
-@main
-struct CollectorMain {
-    static func main() {
-        do {
-            try ChatDBCollector().run()
-        } catch {
-            fputs("\(error.localizedDescription)\n", stderr)
-            exit(1)
-        }
-    }
+do {
+    try ChatDBCollector().run()
+    print("Done. Snapshot written.")
+} catch {
+    fputs("\(error.localizedDescription)\n", stderr)
+    Foundation.exit(1)
 }

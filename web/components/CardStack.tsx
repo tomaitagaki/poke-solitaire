@@ -43,6 +43,7 @@ type CardStackProps = {
   onUnarchive?: () => void;
   onAddLabel?: (label: string) => void;
   onRemoveLabel?: (label: string) => void;
+  dragListeners?: Record<string, Function>;
 };
 
 export function CardStack({
@@ -53,6 +54,7 @@ export function CardStack({
   onUnarchive,
   onAddLabel,
   onRemoveLabel,
+  dragListeners,
 }: CardStackProps) {
   const [expanded, setExpanded] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
@@ -101,10 +103,13 @@ export function CardStack({
       onKeyDown={(e) => e.key === 'Enter' && toggle()}
       aria-expanded={expanded}
     >
-      <div className="card-stack__header">
-        <div>
-          <p className="eyebrow">{card.state}</p>
-          <h3>{card.title}</h3>
+      <div className="card-stack__header" {...(dragListeners ?? {})} style={dragListeners ? { cursor: 'grab' } : undefined}>
+        <div className="card-stack__title-group">
+          {dragListeners && <span className="card-stack__grip" aria-hidden="true">&equiv;</span>}
+          <div>
+            <p className="eyebrow">{card.state}</p>
+            <h3>{card.title}</h3>
+          </div>
         </div>
         <div className="tempo-chip">
           {card.tempo.label} &middot; {card.tempo.messageCount} msgs
@@ -138,21 +143,23 @@ export function CardStack({
 
         {expanded && (
           <div className={`card-stack__messages ${showMessages ? 'card-stack__messages--visible' : ''}`}>
-            {card.messages.map((msg, i) => (
-              <div
-                key={msg.id}
-                className="card-stack__message"
-                style={{
-                  '--fan-index': i,
-                  '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
-                  '--fan-offset-y': `${FAN.offsetY}px`,
-                } as React.CSSProperties}
-              >
-                <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
-                <span className="card-stack__message-sender">{msg.sender ?? 'me'}</span>
-                <p className="card-stack__message-text">{msg.text}</p>
-              </div>
-            ))}
+            {card.messages.map((msg, i) => {
+              const isMe = msg.sender === 'me';
+              return (
+                <div
+                  key={msg.id}
+                  className={`card-stack__message ${isMe ? 'card-stack__message--me' : 'card-stack__message--poke'}`}
+                  style={{
+                    '--fan-index': i,
+                    '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
+                    '--fan-offset-y': `${FAN.offsetY}px`,
+                  } as React.CSSProperties}
+                >
+                  <p className="card-stack__message-text">{msg.text}</p>
+                  <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

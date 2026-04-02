@@ -2,3 +2,5 @@ node_modules/
 .next/
 .playwright-mcp/
 *.tsbuildinfo
+.env.local
+.env*.local
