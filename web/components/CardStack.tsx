@@ -1,3 +1,5 @@
+'use client';
+
 import type { JournalCard } from '../../shared/journal';
 
 export function CardStack({ card }: { card: JournalCard }) {
