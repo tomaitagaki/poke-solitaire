@@ -1,35 +1,36 @@
 # Overview
 
-Poke Solitaire is becoming a Journal: a calm, card-based record of how conversations actually unfold.
+Poke Solitaire is a Journal now: a web-first, day-by-day record of atomic conversation threads.
 
-The core idea is simple:
+The shape is intentionally simple.
 
-- Each page represents a day.
-- Each day is one Solitaire board: a set of vertical stacks.
+- Each page is a day.
+- Each day is a Solitaire board.
+- Each board is a set of vertical stacks.
 - Each stack is a conversation or task with Poke.
-- Users can flip through pages to move across days.
-- A separate Highlights and Bangers view surfaces the highest-signal, most successful, or most meaningful interactions.
+- Users flip through pages to move across days.
+- Highlights and Bangers is the high-signal lane for standout interactions.
 
-This builds on the earlier idea of atomic threads and spatial threads.
+This keeps the original idea of atomic threads and spatial threads, but gives it a more honest container.
 
-Atomic threads are the smallest meaningful units of interaction: one request, one reply, one follow-up, one decision. Spatial threads are how those atoms get arranged into visible structure so the day becomes legible at a glance instead of disappearing into a long feed.
+Atomic threads are the smallest meaningful units of interaction: one ask, one answer, one follow-up, one completion. Spatial threads are the visible stacks that let those atoms breathe in space instead of collapsing into a flat transcript.
 
-The Journal vision keeps that honesty intact. It does not pretend every day is linear. It does not flatten context into one endless timeline. It treats each day as a playable board: stacks can grow, complete, archive, or stay open when the work is still alive.
+The web-first Journal makes that structure usable:
 
-The result is less like a chat log and more like a living daily artifact:
+- the dashboard is the primary surface
+- the collector reads the macOS Messages archive locally
+- the local store becomes the cache and index for all daily views
+- the board can preserve open work while also archiving what is done
 
-- what was in motion
-- what got resolved
-- what carried over
-- what stood out enough to deserve a highlight
+The result should feel less like a chat log and more like a set of playable daily pages.
 
-Highlights and Bangers is the signal lane. It is for the threads that were especially useful, emotionally resonant, unusually clear, or simply very good.
+It should be tasteful and honest:
 
-In practice, the system should stay tasteful and honest:
+- do not fake closure
+- keep unresolved stacks open
+- use timestamps to understand when a thread shifts or resumes
+- let the day remain spacious even when it is busy
 
-- highlight real completion, not fake closure
-- keep open stacks visible when follow-up is still needed
-- preserve timestamps as a primary organizing force
-- let the board feel spacious, not crowded
+Highlights and Bangers is not a vanity reel. It is the small archive of moments that were especially clear, useful, delightful, or successful.
 
-Poke Solitaire is not trying to replace the conversation. It is trying to give it shape.
+Poke Solitaire is trying to give conversations shape without pretending they were simple.
