@@ -69,9 +69,9 @@ export function useCanvasState(dayKey: string, cards: JournalCard[], containerWi
     if (hydrated) saveState(dayKey, state);
   }, [dayKey, state, hydrated]);
 
-  const positions = Object.keys(state.positions).length > 0
-    ? state.positions
-    : computeSolitaireLayout(cards, containerWidth);
+  // Always start from solitaire layout, then overlay any saved positions
+  const solitairePositions = computeSolitaireLayout(cards, containerWidth);
+  const positions = { ...solitairePositions, ...state.positions };
 
   const moveCard = useCallback((cardId: string, pos: Position) => {
     setState((prev) => ({
