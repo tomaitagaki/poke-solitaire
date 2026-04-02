@@ -38,17 +38,18 @@ function DraggableCard({
     opacity: isDragging ? 0.85 : 1,
     transition: isDragging ? 'none' : 'opacity 200ms cubic-bezier(0.165, 0.84, 0.44, 1)',
     willChange: isDragging ? 'transform' : undefined,
+    cursor: isDragging ? 'grabbing' : 'grab',
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <CardStack
         card={card}
         userLabels={userLabels}
         onArchive={onArchive}
         onAddLabel={onAddLabel}
         onRemoveLabel={onRemoveLabel}
-        dragListeners={listeners}
+        isDragging={isDragging}
       />
     </div>
   );

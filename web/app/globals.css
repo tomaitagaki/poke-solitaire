@@ -278,21 +278,6 @@ h1, h2, h3 {
   margin-top: 2px;
 }
 
-/* ── Drag handle ── */
-
-.card-stack__title-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.card-stack__grip {
-  color: var(--color-text-faint);
-  font-size: 1rem;
-  line-height: 1.4;
-  opacity: 0.4;
-  cursor: grab;
-}
 
 /* ── Labels ── */
 

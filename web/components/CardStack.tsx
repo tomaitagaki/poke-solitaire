@@ -43,7 +43,7 @@ type CardStackProps = {
   onUnarchive?: () => void;
   onAddLabel?: (label: string) => void;
   onRemoveLabel?: (label: string) => void;
-  dragListeners?: Record<string, Function>;
+  isDragging?: boolean;
 };
 
 export function CardStack({
@@ -54,15 +54,20 @@ export function CardStack({
   onUnarchive,
   onAddLabel,
   onRemoveLabel,
-  dragListeners,
+  isDragging = false,
 }: CardStackProps) {
   const [expanded, setExpanded] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [showLabelInput, setShowLabelInput] = useState(false);
   const [labelDraft, setLabelDraft] = useState('');
-  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const wasDragging = useRef(false);
+
+  useEffect(() => {
+    if (isDragging) wasDragging.current = true;
+  }, [isDragging]);
 
   const toggle = useCallback(() => {
+    if (wasDragging.current) { wasDragging.current = false; return; }
     if (!isArchived) setExpanded((prev) => !prev);
   }, [isArchived]);
 
@@ -98,26 +103,16 @@ export function CardStack({
   return (
     <article
       className={`card-stack ${expanded ? 'card-stack--expanded' : ''} ${isArchived ? 'card-stack--archived' : ''}`}
-      onPointerDown={(e) => { pointerStart.current = { x: e.clientX, y: e.clientY }; }}
-      onClick={(e) => {
-        if (!pointerStart.current) { toggle(); return; }
-        const dx = e.clientX - pointerStart.current.x;
-        const dy = e.clientY - pointerStart.current.y;
-        pointerStart.current = null;
-        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) toggle();
-      }}
+      onClick={toggle}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && toggle()}
       aria-expanded={expanded}
     >
-      <div className="card-stack__header" {...(dragListeners ?? {})} style={dragListeners ? { cursor: 'grab' } : undefined}>
-        <div className="card-stack__title-group">
-          {dragListeners && <span className="card-stack__grip" aria-hidden="true">&equiv;</span>}
-          <div>
-            <p className="eyebrow">{card.state}</p>
-            <h3>{card.title}</h3>
-          </div>
+      <div className="card-stack__header">
+        <div>
+          <p className="eyebrow">{card.state}</p>
+          <h3>{card.title}</h3>
         </div>
         <div className="tempo-chip">
           {card.tempo.label} &middot; {card.tempo.messageCount} msgs
