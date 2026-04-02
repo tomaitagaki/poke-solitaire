@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { JournalCard } from '../../shared/journal';
 
 /* ── Timing ── */
@@ -60,6 +60,7 @@ export function CardStack({
   const [showMessages, setShowMessages] = useState(false);
   const [showLabelInput, setShowLabelInput] = useState(false);
   const [labelDraft, setLabelDraft] = useState('');
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
 
   const toggle = useCallback(() => {
     if (!isArchived) setExpanded((prev) => !prev);
@@ -97,7 +98,14 @@ export function CardStack({
   return (
     <article
       className={`card-stack ${expanded ? 'card-stack--expanded' : ''} ${isArchived ? 'card-stack--archived' : ''}`}
-      onClick={toggle}
+      onPointerDown={(e) => { pointerStart.current = { x: e.clientX, y: e.clientY }; }}
+      onClick={(e) => {
+        if (!pointerStart.current) { toggle(); return; }
+        const dx = e.clientX - pointerStart.current.x;
+        const dy = e.clientY - pointerStart.current.y;
+        pointerStart.current = null;
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5) toggle();
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && toggle()}

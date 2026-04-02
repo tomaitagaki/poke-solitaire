@@ -48,7 +48,7 @@ export function computeSolitaireLayout(cards: JournalCard[], containerWidth: num
       x: col * (CARD_WIDTH + COLUMN_GAP),
       y: columnHeights[col],
     };
-    columnHeights[col] += 240 + CARD_GAP;
+    columnHeights[col] += 320 + CARD_GAP;
   }
 
   return positions;
