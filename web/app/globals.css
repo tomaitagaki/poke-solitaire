@@ -162,6 +162,7 @@ h1, h2, h3 {
   position: relative;
   margin-top: 18px;
   isolation: isolate;
+  overflow: hidden;
 }
 
 /* ── Card stacks ── */

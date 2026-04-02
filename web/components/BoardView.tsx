@@ -177,7 +177,7 @@ export function BoardView({ day }: { day: JournalDay }) {
     }
 
     moveCard(cardId, {
-      x: Math.max(0, currentPos.x + delta.x),
+      x: Math.max(0, Math.min(containerWidth - CARD_WIDTH, currentPos.x + delta.x)),
       y: Math.max(0, currentPos.y + delta.y),
     });
   }

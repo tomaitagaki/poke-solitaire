@@ -40,6 +40,7 @@ const COLUMN_GAP = 14;
 const HEADER_OFFSET = 0;
 
 export function computeSolitaireLayout(cards: JournalCard[], containerWidth: number): Record<string, Position> {
+  const maxX = Math.max(0, containerWidth - CARD_WIDTH);
   const cols = Math.max(1, Math.floor((containerWidth + COLUMN_GAP) / (CARD_WIDTH + COLUMN_GAP)));
   const positions: Record<string, Position> = {};
   const columnHeights = new Array(cols).fill(HEADER_OFFSET);
@@ -47,7 +48,7 @@ export function computeSolitaireLayout(cards: JournalCard[], containerWidth: num
   for (const card of cards) {
     const col = columnHeights.indexOf(Math.min(...columnHeights));
     positions[card.id] = {
-      x: col * (CARD_WIDTH + COLUMN_GAP),
+      x: Math.min(col * (CARD_WIDTH + COLUMN_GAP), maxX),
       y: columnHeights[col],
     };
     columnHeights[col] += 320 + CARD_GAP;
