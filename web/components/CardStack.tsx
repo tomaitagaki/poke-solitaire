@@ -189,7 +189,6 @@ export function CardStack({
       </div>
 
       <div className="card-stack__meta">
-        <span>{card.interactionCount} interactions</span>
         <div className="card-stack__actions" onClick={(e) => e.stopPropagation()}>
           {expanded && onSplitAt && card.messages.length > 1 && !selectMode && (
             <button type="button" className="card-action-btn" onClick={() => { setSelectMode(true); setSelected(new Set()); }}>

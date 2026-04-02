@@ -345,6 +345,7 @@ h1, h2, h3 {
   font-size: 0.78rem;
   cursor: pointer;
   min-height: 32px;
+  white-space: nowrap;
   transition: background 150ms ease;
 }
 
