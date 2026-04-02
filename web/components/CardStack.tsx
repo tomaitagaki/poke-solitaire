@@ -43,6 +43,7 @@ type CardStackProps = {
   onUnarchive?: () => void;
   onAddLabel?: (label: string) => void;
   onRemoveLabel?: (label: string) => void;
+  onBringToFront?: () => void;
   isDragging?: boolean;
 };
 
@@ -54,6 +55,7 @@ export function CardStack({
   onUnarchive,
   onAddLabel,
   onRemoveLabel,
+  onBringToFront,
   isDragging = false,
 }: CardStackProps) {
   const [expanded, setExpanded] = useState(false);
@@ -68,8 +70,11 @@ export function CardStack({
 
   const toggle = useCallback(() => {
     if (wasDragging.current) { wasDragging.current = false; return; }
-    if (!isArchived) setExpanded((prev) => !prev);
-  }, [isArchived]);
+    if (!isArchived) {
+      setExpanded((prev) => !prev);
+      onBringToFront?.();
+    }
+  }, [isArchived, onBringToFront]);
 
   /* Stagger the message render slightly after expand triggers */
   useEffect(() => {

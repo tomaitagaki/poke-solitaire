@@ -15,6 +15,7 @@ function DraggableCard({
   zIndex,
   userLabels,
   onArchive,
+  onBringToFront,
   onAddLabel,
   onRemoveLabel,
 }: {
@@ -23,6 +24,7 @@ function DraggableCard({
   zIndex: number;
   userLabels: string[];
   onArchive: () => void;
+  onBringToFront: () => void;
   onAddLabel: (label: string) => void;
   onRemoveLabel: (label: string) => void;
 }) {
@@ -49,6 +51,7 @@ function DraggableCard({
         card={card}
         userLabels={userLabels}
         onArchive={onArchive}
+        onBringToFront={onBringToFront}
         onAddLabel={onAddLabel}
         onRemoveLabel={onRemoveLabel}
         isDragging={isDragging}
@@ -194,6 +197,7 @@ export function BoardView({ day }: { day: JournalDay }) {
                 zIndex={interactionOrder.indexOf(card.id) + 2}
                 userLabels={labels[card.id] ?? []}
                 onArchive={() => { bringToFront(card.id); archiveCard(card.id); }}
+                onBringToFront={() => bringToFront(card.id)}
                 onAddLabel={(label) => { bringToFront(card.id); addLabel(card.id, label); }}
                 onRemoveLabel={(label) => removeLabel(card.id, label)}
               />
