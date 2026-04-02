@@ -518,42 +518,36 @@ h1, h2, h3 {
   }
 }
 
-/* ── Split divider ── */
+/* ── Select mode ── */
 
-.split-divider {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 2px 0;
-  margin: 2px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 150ms ease;
+.card-stack__message--selected {
+  box-shadow: 0 0 0 2px var(--color-accent);
 }
 
-.card-stack__messages:hover .split-divider {
-  opacity: 0.4;
+.select-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--color-accent);
+  flex-shrink: 0;
+  margin-bottom: 4px;
+  transition: background 100ms ease;
 }
 
-.split-divider:hover {
-  opacity: 1 !important;
-}
-
-.split-divider__line {
-  flex: 1;
-  height: 1px;
+.select-dot--on {
   background: var(--color-accent);
 }
 
-.split-divider__label {
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--color-accent);
-  white-space: nowrap;
+.card-action-btn--primary {
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+.card-action-btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ── Drop target glow ── */

@@ -27,7 +27,7 @@ function DraggableCard({
   userLabels: string[];
   onArchive: () => void;
   onBringToFront: () => void;
-  onSplitAt: (messageIndex: number) => void;
+  onSplitAt: (messageIds: string[]) => void;
   onAddLabel: (label: string) => void;
   onRemoveLabel: (label: string) => void;
 }) {
@@ -235,14 +235,12 @@ export function BoardView({ day }: { day: JournalDay }) {
                 userLabels={labels[card.id] ?? []}
                 onArchive={() => { bringToFront(card.id); archiveCard(card.id); }}
                 onBringToFront={() => bringToFront(card.id)}
-                onSplitAt={async (msgIndex) => {
-                  const messageId = card.messages[msgIndex]?.id;
-                  if (!messageId) return;
+                onSplitAt={async (messageIds) => {
                   try {
                     const res = await fetch('/api/split', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ cardId: card.id, splitAtMessageId: messageId }),
+                      body: JSON.stringify({ cardId: card.id, messageIds }),
                     });
                     const data = await res.json();
                     if (data.ok) window.location.reload();

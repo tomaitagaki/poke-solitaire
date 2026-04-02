@@ -44,7 +44,7 @@ type CardStackProps = {
   onAddLabel?: (label: string) => void;
   onRemoveLabel?: (label: string) => void;
   onBringToFront?: () => void;
-  onSplitAt?: (messageIndex: number) => void;
+  onSplitAt?: (messageIds: string[]) => void;
   isDragging?: boolean;
 };
 
@@ -64,6 +64,8 @@ export function CardStack({
   const [showMessages, setShowMessages] = useState(false);
   const [showLabelInput, setShowLabelInput] = useState(false);
   const [labelDraft, setLabelDraft] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const wasDragging = useRef(false);
 
   useEffect(() => {
@@ -155,31 +157,30 @@ export function CardStack({
           <div className={`card-stack__messages ${showMessages ? 'card-stack__messages--visible' : ''}`}>
             {card.messages.map((msg, i) => {
               const isMe = msg.sender === 'me';
+              const isSelected = selected.has(i);
               return (
-                <div key={msg.id}>
-                  {i > 0 && onSplitAt && card.messages.length > 1 && (
-                    <button
-                      type="button"
-                      className="split-divider"
-                      onClick={(e) => { e.stopPropagation(); onSplitAt(i); }}
-                      aria-label={`Split stack before this message`}
-                    >
-                      <span className="split-divider__line" />
-                      <span className="split-divider__label">split here</span>
-                      <span className="split-divider__line" />
-                    </button>
+                <div
+                  key={msg.id}
+                  className={`card-stack__message ${isMe ? 'card-stack__message--me' : 'card-stack__message--poke'} ${selectMode && isSelected ? 'card-stack__message--selected' : ''}`}
+                  style={{
+                    '--fan-index': i,
+                    '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
+                    '--fan-offset-y': `${FAN.offsetY}px`,
+                  } as React.CSSProperties}
+                  onClick={selectMode ? (e) => {
+                    e.stopPropagation();
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(i)) next.delete(i); else next.add(i);
+                      return next;
+                    });
+                  } : undefined}
+                >
+                  {selectMode && (
+                    <span className={`select-dot ${isSelected ? 'select-dot--on' : ''}`} />
                   )}
-                  <div
-                    className={`card-stack__message ${isMe ? 'card-stack__message--me' : 'card-stack__message--poke'}`}
-                    style={{
-                      '--fan-index': i,
-                      '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
-                      '--fan-offset-y': `${FAN.offsetY}px`,
-                    } as React.CSSProperties}
-                  >
-                    <p className="card-stack__message-text">{msg.text}</p>
-                    <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
-                  </div>
+                  <p className="card-stack__message-text">{msg.text}</p>
+                  <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
                 </div>
               );
             })}
@@ -190,12 +191,38 @@ export function CardStack({
       <div className="card-stack__meta">
         <span>{card.interactionCount} interactions</span>
         <div className="card-stack__actions" onClick={(e) => e.stopPropagation()}>
-          {!isArchived && onArchive && (
+          {expanded && onSplitAt && card.messages.length > 1 && !selectMode && (
+            <button type="button" className="card-action-btn" onClick={() => { setSelectMode(true); setSelected(new Set()); }}>
+              select
+            </button>
+          )}
+          {selectMode && (
+            <>
+              <button
+                type="button"
+                className="card-action-btn card-action-btn--primary"
+                disabled={selected.size === 0}
+                onClick={() => {
+                  if (selected.size === 0 || !onSplitAt) return;
+                  const ids = [...selected].map((i) => card.messages[i]?.id).filter(Boolean) as string[];
+                  onSplitAt(ids);
+                  setSelectMode(false);
+                  setSelected(new Set());
+                }}
+              >
+                split {selected.size > 0 ? `(${selected.size})` : ''}
+              </button>
+              <button type="button" className="card-action-btn" onClick={() => { setSelectMode(false); setSelected(new Set()); }}>
+                cancel
+              </button>
+            </>
+          )}
+          {!selectMode && !isArchived && onArchive && (
             <button type="button" className="card-action-btn" onClick={onArchive} aria-label="Archive this stack">
               archive
             </button>
           )}
-          {isArchived && onUnarchive && (
+          {!selectMode && isArchived && onUnarchive && (
             <button type="button" className="card-action-btn" onClick={onUnarchive} aria-label="Restore this stack">
               restore
             </button>
