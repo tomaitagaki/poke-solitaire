@@ -55,9 +55,7 @@ h1, h2, h3 {
 /* ── Shell ── */
 
 .shell {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 12px 40px;
+  padding: 16px 4px 24px;
 }
 
 /* ── Hero ── */
