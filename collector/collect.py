@@ -15,6 +15,9 @@ from datetime import datetime, timedelta, timezone
 CORRECTIONS_PATH = os.path.expanduser(
     "~/Library/Application Support/PokeSolitaire/corrections.json"
 )
+OPTIMIZED_PROMPT_PATH = os.path.expanduser(
+    "~/Library/Application Support/PokeSolitaire/optimized-clustering-prompt.txt"
+)
 
 CHAT_IDENTIFIER = os.environ.get("POKE_CHAT_ID", "")
 if not CHAT_IDENTIFIER:
@@ -97,6 +100,18 @@ def _load_corrections() -> str:
         return ""
 
 
+def _load_optimized_instructions() -> str:
+    """Load GEPA/DSPy-optimized clustering instructions if available."""
+    try:
+        with open(OPTIMIZED_PROMPT_PATH) as f:
+            instructions = f.read().strip()
+        if instructions:
+            return f"\n\nOPTIMIZED INSTRUCTIONS (from GEPA):\n{instructions}\n"
+    except Exception:
+        pass
+    return ""
+
+
 def cluster_by_topic(records: list[dict]) -> list[list[dict]]:
     """Use LLM to segment messages by topic. Falls back to time-gap clustering."""
     if not OPENROUTER_API_KEY or len(records) == 0:
@@ -124,8 +139,10 @@ def cluster_by_topic(records: list[dict]) -> list[list[dict]]:
             msg_lines.append(f"{i}: [{time_str}] {m['sender']}: {text_preview}")
 
         corrections = _load_corrections()
+        optimized = _load_optimized_instructions()
 
         prompt = f"""You are segmenting a day of messages between "me" and "poke" into distinct conversation topics.
+{optimized}
 
 Messages for {day_key} ({len(day_records)} total):
 {chr(10).join(msg_lines)}

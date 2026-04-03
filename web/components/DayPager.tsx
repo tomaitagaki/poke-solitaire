@@ -29,6 +29,7 @@ export function DayPager({ days }: { days: JournalDay[] }) {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [reclustering, setReclustering] = useState(false);
   const [collecting, setCollecting] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
   const resetLayoutRef = useRef<(() => void) | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -71,6 +72,25 @@ export function DayPager({ days }: { days: JournalDay[] }) {
       console.error('Recluster failed:', e);
     } finally {
       setReclustering(false);
+    }
+  }
+
+  async function handleOptimize() {
+    setOptimizing(true);
+    try {
+      const res = await fetch('/api/optimize', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        console.log('Optimization output:', data.output);
+        alert('Prompt optimized. Next Sync or Recluster will use the improved prompt.');
+      } else {
+        console.error('Optimize failed:', data.error);
+        alert(data.error || 'Optimization failed');
+      }
+    } catch (e) {
+      console.error('Optimize failed:', e);
+    } finally {
+      setOptimizing(false);
     }
   }
 
@@ -131,6 +151,9 @@ export function DayPager({ days }: { days: JournalDay[] }) {
             </button>
             <button type="button" className="pager__action-btn" onClick={() => resetLayoutRef.current?.()}>
               Reset
+            </button>
+            <button type="button" className="pager__action-btn" onClick={handleOptimize} disabled={optimizing}>
+              {optimizing ? 'Optimizing\u2026' : 'GEPA'}
             </button>
           </div>
         </div>

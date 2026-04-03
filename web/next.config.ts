@@ -6,6 +6,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname, '..'),
   },
+  webpack: (config) => {
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/collector/.venv/**', '**/node_modules/**'],
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
