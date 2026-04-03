@@ -42,6 +42,7 @@ body {
   background: linear-gradient(180deg, #f7f2ea 0%, #efe6d8 100%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
 }
 
 h1, h2, h3 {
@@ -53,7 +54,7 @@ h1, h2, h3 {
 .shell {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 32px 20px 56px;
+  padding: 24px 12px 40px;
 }
 
 /* ── Hero ── */
@@ -93,10 +94,9 @@ h2 {
 /* ── Section containers ── */
 
 .board,
-.highlights,
 .pager {
-  margin-top: 24px;
-  padding: 20px;
+  margin-top: 16px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.55);
   box-shadow:
     0 0 0 1px var(--color-border),
