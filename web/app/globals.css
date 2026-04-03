@@ -164,7 +164,7 @@ h2 {
   position: relative;
   margin-top: 18px;
   isolation: isolate;
-  overflow: hidden;
+  padding-top: 4px;
 }
 
 /* ── Card stacks ── */
