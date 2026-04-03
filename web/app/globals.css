@@ -190,7 +190,7 @@ h2 {
   box-shadow: 0 0 0 1px var(--color-border);
   border: none;
   border-radius: var(--radius-md);
-  padding: 14px;
+  padding: 16px;
   cursor: pointer;
   user-select: none;
   transition:
@@ -220,6 +220,17 @@ h2 {
 
 .card-stack--archived {
   opacity: 0.6;
+}
+
+/* ── Card sections spacing (8pt grid) ── */
+
+.card-stack__header {
+  margin-bottom: 12px;
+}
+
+.card-stack__labels {
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 /* ── Card body: crossfade between summary and messages ── */
@@ -345,9 +356,9 @@ h2 {
 
 .card-stack__meta {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
   color: var(--color-text-faint);
   font-size: 0.92rem;
   align-items: center;

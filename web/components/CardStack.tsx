@@ -122,7 +122,7 @@ export function CardStack({
       <div className="card-stack__header">
         <div>
           <p className="eyebrow">{card.state}</p>
-          <FittedText as="h3" text={card.title} maxLines={2} maxSize={16} minSize={12} />
+          <FittedText as="h3" text={card.title} maxLines={2} maxSize={18} minSize={13} />
         </div>
         <div className="tempo-chip">
           {card.tempo.label} &middot; {card.tempo.messageCount} msgs
