@@ -120,12 +120,9 @@ export function CardStack({
       aria-expanded={expanded}
     >
       <div className="card-stack__header">
-        <div>
-          <p className="eyebrow">{card.state}</p>
-          <FittedText as="h3" text={card.title} maxLines={2} maxSize={18} minSize={13} />
-        </div>
+        <FittedText as="h3" text={card.title} maxLines={2} maxSize={18} minSize={13} />
         <div className="tempo-chip">
-          {card.tempo.label} &middot; {card.tempo.messageCount} msgs
+          {card.tempo.messageCount} msgs
         </div>
       </div>
 
