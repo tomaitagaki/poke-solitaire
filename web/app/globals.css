@@ -105,13 +105,88 @@ h2 {
   border-radius: var(--radius-lg);
 }
 
-.card-stack__header,
-.pager__header,
-.highlights__header {
+.card-stack__header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
+}
+
+.pager__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pager__center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pager__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pager__action-btn {
+  border: none;
+  background: none;
+  color: var(--color-text-faint);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  transition: color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pager__action-btn:hover {
+    color: var(--color-accent);
+    background: var(--color-accent-bg);
+  }
+}
+
+.pager__action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pager__nav {
+  box-shadow: 0 0 0 1px var(--color-border-strong);
+  border: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-pill);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: background 150ms ease;
+}
+
+.pager__nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pager__nav:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pager__nav:hover:not(:disabled) {
+    background: var(--color-accent-bg);
+  }
 }
 
 /* ── Pager controls ── */
@@ -143,45 +218,6 @@ h2 {
   gap: 10px;
 }
 
-.pager__controls button,
-.board__btn {
-  box-shadow: 0 0 0 1px var(--color-border-strong);
-  border: none;
-  background: var(--color-surface);
-  color: var(--color-text);
-  border-radius: var(--radius-pill);
-  padding: 10px 14px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: background 150ms ease;
-  min-height: 44px;
-}
-
-.pager__controls button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.pager__controls button:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.board__btn:active {
-  transform: scale(0.97);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .board__btn:hover {
-    background: var(--color-accent-bg);
-  }
-}
-
-.board__actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
 
 /* ── Canvas ── */
 

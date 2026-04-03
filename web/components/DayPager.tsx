@@ -1,13 +1,9 @@
 /* ─────────────────────────────────────────────────────────
  * ANIMATION STORYBOARD: Page Flip (simultaneous)
  *
- * Navigate previous (←):
- *    0ms   page slides right 60px + fades + blurs out
- *    0ms   content swaps instantly (hidden behind blur)
- *  250ms   page slides back to center + fades + sharpens in
- *
- * Navigate next (→): mirror — slides left
- * Reduced-motion: instant swap.
+ *    0ms   page slides + fades + blurs out
+ *    0ms   content swaps (hidden behind blur)
+ *  250ms   settled
  * ───────────────────────────────────────────────────────── */
 
 'use client';
@@ -31,6 +27,8 @@ export function DayPager({ days }: { days: JournalDay[] }) {
   const [index, setIndex] = useState(Math.max(0, days.length - 1));
   const [exiting, setExiting] = useState(false);
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
+  const [reclustering, setReclustering] = useState(false);
+  const resetLayoutRef = useRef<(() => void) | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const day = days[index];
@@ -50,12 +48,30 @@ export function DayPager({ days }: { days: JournalDay[] }) {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
-      // Swap content while blurred/faded — user can't see the switch
       setIndex(nextIndex);
       setExiting(false);
       setDirection(null);
     }, FLIP.duration);
   }, [animating, index, days.length]);
+
+  async function handleRecluster() {
+    if (!day) return;
+    setReclustering(true);
+    try {
+      const res = await fetch('/api/recluster', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dayKey: day.dayKey }),
+      });
+      const data = await res.json();
+      if (data.ok) window.location.reload();
+      else console.error('Recluster failed:', data.error);
+    } catch (e) {
+      console.error('Recluster failed:', e);
+    } finally {
+      setReclustering(false);
+    }
+  }
 
   if (!day) {
     return <p>No journal data yet.</p>;
@@ -77,31 +93,46 @@ export function DayPager({ days }: { days: JournalDay[] }) {
   return (
     <section className="pager">
       <header className="pager__header">
-        <h2 className="pager__title" style={{ opacity: isSliding ? 0 : 1, filter: isSliding ? 'blur(4px)' : 'blur(0px)' }}>
-          {formatDay(day.dayKey)}
-        </h2>
-        <div className="pager__controls">
-          <button
-            type="button"
-            onClick={() => flip('prev')}
-            disabled={index <= 0 || animating}
-            aria-label="Previous day"
-          >
-            &larr;
-          </button>
-          <button
-            type="button"
-            onClick={() => flip('next')}
-            disabled={index >= days.length - 1 || animating}
-            aria-label="Next day"
-          >
-            &rarr;
-          </button>
+        <button
+          type="button"
+          className="pager__nav"
+          onClick={() => flip('prev')}
+          disabled={index <= 0 || animating}
+          aria-label="Previous day"
+        >
+          &larr;
+        </button>
+
+        <div className="pager__center">
+          <h2 className="pager__title" style={{ opacity: isSliding ? 0 : 1, filter: isSliding ? 'blur(4px)' : 'blur(0px)' }}>
+            {formatDay(day.dayKey)}
+          </h2>
+          <div className="pager__actions">
+            <button type="button" className="pager__action-btn" onClick={handleRecluster} disabled={reclustering}>
+              {reclustering ? 'Clustering\u2026' : 'Recluster'}
+            </button>
+            <button type="button" className="pager__action-btn" onClick={() => resetLayoutRef.current?.()}>
+              Reset layout
+            </button>
+          </div>
         </div>
+
+        <button
+          type="button"
+          className="pager__nav"
+          onClick={() => flip('next')}
+          disabled={index >= days.length - 1 || animating}
+          aria-label="Next day"
+        >
+          &rarr;
+        </button>
       </header>
 
       <div className="pager__page" style={flipStyle}>
-        <BoardView day={day} />
+        <BoardView
+          day={day}
+          onResetLayout={(fn) => { resetLayoutRef.current = fn; }}
+        />
       </div>
     </section>
   );

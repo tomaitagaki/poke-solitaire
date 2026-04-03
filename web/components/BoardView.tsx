@@ -76,35 +76,13 @@ function DraggableCard({
   );
 }
 
-export function BoardView({ day }: { day: JournalDay }) {
+export function BoardView({ day, onResetLayout }: { day: JournalDay; onResetLayout?: (fn: () => void) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [mounted, setMounted] = useState(false);
-  const [reclustering, setReclustering] = useState(false);
   const [mergePrompt, setMergePrompt] = useState<{ sourceId: string; targetId: string } | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
-
-  async function handleRecluster() {
-    setReclustering(true);
-    try {
-      const res = await fetch('/api/recluster', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dayKey: day.dayKey }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        window.location.reload();
-      } else {
-        console.error('Recluster failed:', data.error);
-      }
-    } catch (e) {
-      console.error('Recluster failed:', e);
-    } finally {
-      setReclustering(false);
-    }
-  }
 
   const measureRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -128,6 +106,10 @@ export function BoardView({ day }: { day: JournalDay }) {
     removeLabel,
     mergeCards,
   } = useCanvasState(day.dayKey, day.cards, containerWidth);
+
+  useEffect(() => {
+    onResetLayout?.(() => resetLayout);
+  }, [onResetLayout, resetLayout]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -206,15 +188,6 @@ export function BoardView({ day }: { day: JournalDay }) {
 
   return (
     <section className="board">
-      <div className="board__actions">
-        <button type="button" className="board__btn" onClick={handleRecluster} disabled={reclustering}>
-          {reclustering ? 'Clustering\u2026' : 'Recluster'}
-        </button>
-        <button type="button" className="board__btn" onClick={resetLayout}>
-          Reset layout
-        </button>
-      </div>
-
       <div ref={measureRef} className="board__canvas" style={{
         minHeight: Math.max(300, ...activeCards.map((c) => (positions[c.id]?.y ?? 0) + 260)) + CANVAS_PADDING_BOTTOM,
       }}>
