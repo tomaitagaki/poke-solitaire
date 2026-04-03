@@ -206,20 +206,14 @@ export function BoardView({ day }: { day: JournalDay }) {
 
   return (
     <section className="board">
-      <header className="board__header">
-        <div>
-          <p className="eyebrow">Solitaire board</p>
-          <h2>{day.dayKey}</h2>
-        </div>
-        <div className="board__actions">
-          <button type="button" className="board__btn" onClick={handleRecluster} disabled={reclustering}>
-            {reclustering ? 'Clustering\u2026' : 'Recluster'}
-          </button>
-          <button type="button" className="board__btn" onClick={resetLayout}>
-            Reset layout
-          </button>
-        </div>
-      </header>
+      <div className="board__actions">
+        <button type="button" className="board__btn" onClick={handleRecluster} disabled={reclustering}>
+          {reclustering ? 'Clustering\u2026' : 'Recluster'}
+        </button>
+        <button type="button" className="board__btn" onClick={resetLayout}>
+          Reset layout
+        </button>
+      </div>
 
       <div ref={measureRef} className="board__canvas" style={{
         minHeight: Math.max(300, ...activeCards.map((c) => (positions[c.id]?.y ?? 0) + 260)) + CANVAS_PADDING_BOTTOM,

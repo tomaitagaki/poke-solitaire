@@ -8,11 +8,7 @@ export default async function Page() {
   return (
     <main className="shell">
       <header className="hero">
-        <p className="eyebrow">Poke Solitaire / Journal</p>
-        <h1>Flip through days. Read the stacks. Keep the shape of the conversation.</h1>
-        <p className="hero__copy">
-          The local Messages archive feeds a local store, and the web dashboard turns that store into daily Solitaire boards.
-        </p>
+        <h1>Poke Solitaire</h1>
       </header>
 
       <DayPager days={days} />

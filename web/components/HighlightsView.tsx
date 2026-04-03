@@ -81,10 +81,7 @@ export function HighlightsView({
   return (
     <section className="highlights">
       <header className="highlights__header">
-        <div>
-          <p className="eyebrow">Highlights and Bangers</p>
-          <h2>High-signal interactions</h2>
-        </div>
+        <h2>Highlights</h2>
       </header>
 
       {pendingSuggestions.length > 0 && (

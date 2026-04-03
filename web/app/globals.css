@@ -59,20 +59,21 @@ h1, h2, h3 {
 /* ── Hero ── */
 
 .hero {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
-.hero h1,
-.board h2,
-.highlights h2 {
+.hero h1 {
   margin: 0;
-  line-height: 1.05;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.hero__copy,
-.board__subcopy,
+h2 {
+  margin: 0;
+  line-height: 1.15;
+}
+
 .card-stack__summary,
 .highlight-card p {
   color: var(--color-text-muted);
@@ -104,14 +105,13 @@ h1, h2, h3 {
   border-radius: var(--radius-lg);
 }
 
-.board__header,
-.highlights__header,
 .card-stack__header,
-.pager__header {
+.pager__header,
+.highlights__header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: flex-start;
+  align-items: center;
 }
 
 /* ── Pager controls ── */
@@ -154,6 +154,8 @@ h1, h2, h3 {
 .board__actions {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 /* ── Canvas ── */
