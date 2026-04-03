@@ -116,6 +116,21 @@ h2 {
 
 /* ── Pager controls ── */
 
+/* ── Page flip ── */
+
+.pager__page {
+  transition:
+    transform 150ms var(--ease-out-quart),
+    opacity 150ms var(--ease-out-quart);
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pager__page {
+    transition: none;
+  }
+}
+
 .pager__controls {
   display: flex;
   gap: 10px;
