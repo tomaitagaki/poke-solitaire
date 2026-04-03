@@ -84,7 +84,7 @@ export function DayPager({ days }: { days: JournalDay[] }) {
   return (
     <section className="pager">
       <header className="pager__header">
-        <h2>{formatDay(day.dayKey)}</h2>
+        <h2 className="pager__title" style={{ opacity: flipDir ? 0 : 1 }}>{formatDay(day.dayKey)}</h2>
         <div className="pager__controls">
           <button
             type="button"
