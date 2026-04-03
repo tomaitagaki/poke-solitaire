@@ -4,6 +4,24 @@ import os from 'node:os';
 import path from 'node:path';
 import type { MessageRow } from '../../../../shared/journal';
 
+const CORRECTIONS_PATH = path.join(
+  os.homedir(),
+  'Library/Application Support/PokeSolitaire/corrections.json',
+);
+
+async function loadCorrections(): Promise<string> {
+  try {
+    const raw = await fs.readFile(CORRECTIONS_PATH, 'utf8');
+    const corrections = JSON.parse(raw) as Array<{ type: string; detail: string }>;
+    if (corrections.length === 0) return '';
+    const recent = corrections.slice(-15);
+    return '\n\nLEARNINGS FROM PAST USER CORRECTIONS (apply these):\n' +
+      recent.map((c) => `- [${c.type}] ${c.detail}`).join('\n');
+  } catch {
+    return '';
+  }
+}
+
 function expandHome(p: string): string {
   return p.startsWith('~') ? path.join(os.homedir(), p.slice(1)) : p;
 }
@@ -66,6 +84,8 @@ export async function POST(req: NextRequest) {
     return `${i}: [${time}] ${m.sender ?? 'me'}: ${text}`;
   });
 
+  const corrections = await loadCorrections();
+
   const prompt = `You are segmenting a day of messages between "me" and "poke" into distinct conversation topics.
 
 Messages for ${dayKey} (${dayMessages.length} total):
@@ -73,7 +93,7 @@ ${msgLines.join('\n')}
 
 Group these message indices by topic. Each group should be ONE coherent topic — not two topics joined with "and".
 Time gaps are a hint but topic shifts matter more.
-
+${corrections}
 Return ONLY a JSON array of objects, each with:
 - "indices": array of message index numbers belonging to this topic
 - "title": short title (3-6 words, ONE topic, no "and")`;

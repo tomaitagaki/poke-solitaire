@@ -12,6 +12,10 @@ import sqlite3
 import sys
 from datetime import datetime, timedelta, timezone
 
+CORRECTIONS_PATH = os.path.expanduser(
+    "~/Library/Application Support/PokeSolitaire/corrections.json"
+)
+
 CHAT_IDENTIFIER = os.environ.get("POKE_CHAT_ID", "")
 if not CHAT_IDENTIFIER:
     print("Set POKE_CHAT_ID env var to the iMessage chat identifier for Poke", file=sys.stderr)
@@ -80,6 +84,19 @@ def cluster_by_time_gap(records: list[dict], gap_minutes: int = TIME_GAP_MINUTES
     return clusters
 
 
+def _load_corrections() -> str:
+    try:
+        with open(CORRECTIONS_PATH) as f:
+            corrections = json.load(f)
+        if not corrections:
+            return ""
+        recent = corrections[-15:]
+        lines = [f"- [{c['type']}] {c['detail']}" for c in recent]
+        return "\n\nLEARNINGS FROM PAST USER CORRECTIONS (apply these):\n" + "\n".join(lines)
+    except Exception:
+        return ""
+
+
 def cluster_by_topic(records: list[dict]) -> list[list[dict]]:
     """Use LLM to segment messages by topic. Falls back to time-gap clustering."""
     if not OPENROUTER_API_KEY or len(records) == 0:
@@ -106,6 +123,8 @@ def cluster_by_topic(records: list[dict]) -> list[list[dict]]:
             text_preview = m["text"][:120].replace("\n", " ")
             msg_lines.append(f"{i}: [{time_str}] {m['sender']}: {text_preview}")
 
+        corrections = _load_corrections()
+
         prompt = f"""You are segmenting a day of messages between "me" and "poke" into distinct conversation topics.
 
 Messages for {day_key} ({len(day_records)} total):
@@ -113,7 +132,7 @@ Messages for {day_key} ({len(day_records)} total):
 
 Group these message indices by topic. Each group should be ONE coherent topic — not two topics joined with "and".
 Time gaps are a hint but topic shifts matter more. A rapid back-and-forth on one topic is one group even if it spans hours.
-
+{corrections}
 Return ONLY a JSON array of objects, each with:
 - "indices": array of message index numbers belonging to this topic
 - "title": short title (3-6 words, ONE topic, no "and")

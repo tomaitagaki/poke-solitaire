@@ -67,6 +67,8 @@ export function CardStack({
   const [labelDraft, setLabelDraft] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(card.title);
   const wasDragging = useRef(false);
 
   useEffect(() => {
@@ -120,7 +122,46 @@ export function CardStack({
       aria-expanded={expanded}
     >
       <div className="card-stack__header">
-        <FittedText as="h3" text={card.title} maxLines={2} maxSize={18} minSize={13} />
+        {editingTitle ? (
+          <form
+            className="card-stack__title-form"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const trimmed = titleDraft.trim();
+              if (trimmed && trimmed !== card.title) {
+                await fetch('/api/rename', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ oldTitle: card.title, newTitle: trimmed }),
+                });
+                window.location.reload();
+              }
+              setEditingTitle(false);
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              autoFocus
+              className="card-stack__title-input"
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={() => setEditingTitle(false)}
+              onKeyDown={(e) => { if (e.key === 'Escape') setEditingTitle(false); }}
+            />
+          </form>
+        ) : (
+          <div onDoubleClick={(e) => { e.stopPropagation(); setEditingTitle(true); setTitleDraft(card.title); }}>
+            <FittedText
+              as="h3"
+              text={card.title}
+              maxLines={2}
+              maxSize={18}
+              minSize={13}
+              className="card-stack__title"
+            />
+          </div>
+        )}
         <div className="tempo-chip">
           {card.tempo.messageCount} msgs
         </div>

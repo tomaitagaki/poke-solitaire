@@ -288,6 +288,34 @@ h2 {
   opacity: 0.6;
 }
 
+/* ── Title editing ── */
+
+.card-stack__title {
+  cursor: text;
+}
+
+.card-stack__title-form {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-stack__title-input {
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(138, 108, 70, 0.08);
+  color: var(--color-text);
+  outline: none;
+  font-family: inherit;
+}
+
+.card-stack__title-input:focus {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
 /* ── Card sections spacing (8pt grid) ── */
 
 .card-stack__header {

@@ -167,8 +167,21 @@ export function BoardView({ day, onResetLayout }: { day: JournalDay; onResetLayo
 
   function handleMergeConfirm() {
     if (!mergePrompt) return;
+    const source = activeCards.find(c => c.id === mergePrompt.sourceId);
+    const target = activeCards.find(c => c.id === mergePrompt.targetId);
     mergeCards(mergePrompt.targetId, mergePrompt.sourceId);
     setMergePrompt(null);
+    // GEPA: log merge correction
+    if (source && target) {
+      fetch('/api/corrections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'merge',
+          detail: `User merged "${source.title}" into "${target.title}". These clusters were about the same topic and should have been one cluster.`,
+        }),
+      }).catch(() => {});
+    }
   }
 
   function handleMergeCancel() {

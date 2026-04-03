@@ -23,9 +23,9 @@ async function logCorrection(type: string, detail: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { cardId, messageIds } = await req.json();
-  if (!cardId || !messageIds?.length) {
-    return NextResponse.json({ error: 'cardId and messageIds required' }, { status: 400 });
+  const { oldTitle, newTitle } = await req.json();
+  if (!oldTitle || !newTitle) {
+    return NextResponse.json({ error: 'oldTitle and newTitle required' }, { status: 400 });
   }
 
   const snapshotPath = expandHome(
@@ -40,24 +40,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Could not read snapshot' }, { status: 500 });
   }
 
-  const firstMsg = allRows.find((r) => r.id === messageIds[0]);
-  if (!firstMsg?.subject) {
-    return NextResponse.json({ error: 'Message not found or has no subject' }, { status: 404 });
-  }
-
-  const originalSubject = firstMsg.subject;
-  const splitTexts = messageIds.map((id: string) => {
-    const row = allRows.find((r) => r.id === id);
-    return row?.text?.slice(0, 80) ?? '';
-  }).filter(Boolean);
-
-  const splitIds = new Set(messageIds as string[]);
-  const newSubject = `${originalSubject} (split)`;
-
   let count = 0;
   for (const row of allRows) {
-    if (splitIds.has(row.id)) {
-      row.subject = newSubject;
+    if (row.subject === oldTitle) {
+      row.subject = newTitle;
       count++;
     }
   }
@@ -65,7 +51,7 @@ export async function POST(req: NextRequest) {
   await fs.writeFile(snapshotPath, JSON.stringify(allRows, null, 2));
 
   // GEPA: log correction
-  await logCorrection('split', `User split ${count} message(s) out of "${originalSubject}". The removed messages were: ${splitTexts.join(' | ')}. These did not belong to the "${originalSubject}" topic.`);
+  await logCorrection('rename', `User renamed cluster "${oldTitle}" → "${newTitle}". The new title better describes the topic.`);
 
-  return NextResponse.json({ ok: true, splitCount: count, newSubject });
+  return NextResponse.json({ ok: true, renamed: count });
 }
