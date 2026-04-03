@@ -288,6 +288,12 @@ h2 {
   color: var(--color-text);
   line-height: 1.4;
   font-size: 0.88rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.card-stack__summary-text {
+  color: var(--color-text-muted);
 }
 
 .card-stack__message-time {

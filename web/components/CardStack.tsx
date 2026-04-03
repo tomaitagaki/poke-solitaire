@@ -16,6 +16,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { JournalCard } from '../../shared/journal';
+import { FittedText } from './FittedText';
 
 /* ── Timing ── */
 const TIMING = {
@@ -121,7 +122,7 @@ export function CardStack({
       <div className="card-stack__header">
         <div>
           <p className="eyebrow">{card.state}</p>
-          <h3>{card.title}</h3>
+          <FittedText as="h3" text={card.title} maxLines={2} maxSize={16} minSize={12} />
         </div>
         <div className="tempo-chip">
           {card.tempo.label} &middot; {card.tempo.messageCount} msgs
@@ -149,9 +150,9 @@ export function CardStack({
       )}
 
       <div className="card-stack__body">
-        <p className={`card-stack__summary ${expanded ? 'card-stack__summary--hidden' : ''}`}>
-          {card.summary}
-        </p>
+        <div className={`card-stack__summary ${expanded ? 'card-stack__summary--hidden' : ''}`}>
+          <FittedText text={card.summary} maxLines={3} maxSize={14} minSize={12} className="card-stack__summary-text" />
+        </div>
 
         {expanded && (
           <div className={`card-stack__messages ${showMessages ? 'card-stack__messages--visible' : ''}`}>

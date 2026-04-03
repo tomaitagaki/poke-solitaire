@@ -78,7 +78,7 @@ function DraggableCard({
 
 export function BoardView({ day }: { day: JournalDay }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(1060);
+  const [containerWidth, setContainerWidth] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [reclustering, setReclustering] = useState(false);
   const [mergePrompt, setMergePrompt] = useState<{ sourceId: string; targetId: string } | null>(null);
