@@ -28,6 +28,7 @@ export function DayPager({ days }: { days: JournalDay[] }) {
   const [exiting, setExiting] = useState(false);
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [reclustering, setReclustering] = useState(false);
+  const [collecting, setCollecting] = useState(false);
   const resetLayoutRef = useRef<(() => void) | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -73,6 +74,20 @@ export function DayPager({ days }: { days: JournalDay[] }) {
     }
   }
 
+  async function handleCollect() {
+    setCollecting(true);
+    try {
+      const res = await fetch('/api/collect', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) window.location.reload();
+      else console.error('Collect failed:', data.error);
+    } catch (e) {
+      console.error('Collect failed:', e);
+    } finally {
+      setCollecting(false);
+    }
+  }
+
   if (!day) {
     return <p>No journal data yet.</p>;
   }
@@ -108,11 +123,14 @@ export function DayPager({ days }: { days: JournalDay[] }) {
             {formatDay(day.dayKey)}
           </h2>
           <div className="pager__actions">
+            <button type="button" className="pager__action-btn" onClick={handleCollect} disabled={collecting}>
+              {collecting ? 'Syncing\u2026' : 'Sync'}
+            </button>
             <button type="button" className="pager__action-btn" onClick={handleRecluster} disabled={reclustering}>
               {reclustering ? 'Clustering\u2026' : 'Recluster'}
             </button>
             <button type="button" className="pager__action-btn" onClick={() => resetLayoutRef.current?.()}>
-              Reset layout
+              Reset
             </button>
           </div>
         </div>
