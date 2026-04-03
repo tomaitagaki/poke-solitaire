@@ -8,7 +8,6 @@ import { CardStack } from './CardStack';
 import { MergeDialog } from './MergeDialog';
 
 const CARD_WIDTH = 300;
-const CANVAS_PADDING_BOTTOM = 40;
 
 function DraggableCard({
   card,
@@ -188,9 +187,7 @@ export function BoardView({ day, onResetLayout }: { day: JournalDay; onResetLayo
 
   return (
     <section className="board">
-      <div ref={measureRef} className="board__canvas" style={{
-        minHeight: Math.max(300, ...activeCards.map((c) => (positions[c.id]?.y ?? 0) + 260)) + CANVAS_PADDING_BOTTOM,
-      }}>
+      <div ref={measureRef} className="board__canvas">
         {mounted && (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             {activeCards.map((card) => (

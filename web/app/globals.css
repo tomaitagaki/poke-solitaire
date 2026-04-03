@@ -224,9 +224,9 @@ h2 {
 
 .board__canvas {
   position: relative;
-  margin-top: 18px;
   isolation: isolate;
   padding-top: 4px;
+  min-height: calc(100vh - 120px);
 }
 
 /* ── Card stacks ── */
