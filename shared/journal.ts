@@ -146,7 +146,8 @@ export function clusterMessagesIntoCards(rows: MessageRow[]): JournalCard[] {
     const looseRows: MessageRow[] = [];
 
     for (const row of sorted) {
-      const key = row.threadId ?? row.conversationId;
+      // Primary grouping: subject (set by LLM clustering), then threadId/conversationId
+      const key = row.subject?.trim() || row.threadId || row.conversationId;
       if (!key) {
         looseRows.push(row);
         continue;
