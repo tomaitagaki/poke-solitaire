@@ -77,7 +77,7 @@ export function DayPager({ days }: { days: JournalDay[] }) {
   return (
     <section className="pager">
       <header className="pager__header">
-        <h2 className="pager__title" style={{ opacity: isSliding ? 0 : 1 }}>
+        <h2 className="pager__title" style={{ opacity: isSliding ? 0 : 1, filter: isSliding ? 'blur(4px)' : 'blur(0px)' }}>
           {formatDay(day.dayKey)}
         </h2>
         <div className="pager__controls">

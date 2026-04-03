@@ -133,7 +133,9 @@ h2 {
 }
 
 .pager__title {
-  transition: opacity 150ms var(--ease-out-quart);
+  transition:
+    opacity 250ms var(--ease-out-quart),
+    filter 250ms var(--ease-out-quart);
 }
 
 .pager__controls {
