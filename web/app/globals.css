@@ -691,13 +691,14 @@ h2 {
 }
 
 .select-dot {
-  display: block;
-  width: 14px;
-  height: 14px;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   box-shadow: 0 0 0 1.5px var(--color-accent);
   flex-shrink: 0;
-  margin-bottom: 4px;
+  vertical-align: middle;
+  margin-right: 6px;
   transition: background 100ms ease;
 }
 

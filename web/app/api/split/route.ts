@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Message not found or has no subject' }, { status: 404 });
   }
 
-  const originalSubject = firstMsg.subject;
+  // Strip any existing "(split)" suffixes to avoid stacking
+  const originalSubject = firstMsg.subject.replace(/\s*\(split\)\s*/g, '').trim();
   const splitTexts = messageIds.map((id: string) => {
     const row = allRows.find((r) => r.id === id);
     return row?.text?.slice(0, 80) ?? '';

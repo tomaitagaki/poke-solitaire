@@ -218,10 +218,12 @@ export function CardStack({
                       });
                     } : undefined}
                   >
-                    {selectMode && (
-                      <span className={`select-dot ${isSelected ? 'select-dot--on' : ''}`} />
-                    )}
-                    <p className="card-stack__message-text">{msg.text}</p>
+                    <p className="card-stack__message-text">
+                      {selectMode && (
+                        <span className={`select-dot ${isSelected ? 'select-dot--on' : ''}`} />
+                      )}
+                      {msg.text}
+                    </p>
                     <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
                   </div>
                 );
