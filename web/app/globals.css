@@ -120,9 +120,10 @@ h2 {
 
 .pager__page {
   transition:
-    transform 150ms var(--ease-out-quart),
-    opacity 150ms var(--ease-out-quart);
-  will-change: transform, opacity;
+    transform 250ms var(--ease-out-quart),
+    opacity 250ms var(--ease-out-quart),
+    filter 250ms var(--ease-out-quart);
+  will-change: transform, opacity, filter;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -159,7 +160,10 @@ h2 {
   cursor: not-allowed;
 }
 
-.pager__controls button:active:not(:disabled),
+.pager__controls button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
 .board__btn:active {
   transform: scale(0.97);
 }
