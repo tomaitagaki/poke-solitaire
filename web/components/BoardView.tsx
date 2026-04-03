@@ -158,9 +158,10 @@ export function BoardView({ day, onResetLayout }: { day: JournalDay; onResetLayo
       return;
     }
 
+    const canvasHeight = containerRef.current?.clientHeight ?? Infinity;
     moveCard(cardId, {
       x: Math.max(0, Math.min(containerWidth - CARD_WIDTH, currentPos.x + delta.x)),
-      y: Math.max(0, currentPos.y + delta.y),
+      y: Math.max(0, Math.min(canvasHeight - 100, currentPos.y + delta.y)),
     });
   }
 
