@@ -147,43 +147,47 @@ export function CardStack({
       )}
 
       <div className="card-stack__body">
-        <div className={`card-stack__summary ${expanded ? 'card-stack__summary--hidden' : ''}`}>
-          <FittedText text={card.summary} maxLines={3} maxSize={14} minSize={12} className="card-stack__summary-text" />
+        <div className={`card-stack__collapse ${expanded ? 'card-stack__collapse--hidden' : ''}`}>
+          <div className="card-stack__collapse-inner">
+            <FittedText text={card.summary} maxLines={3} maxSize={14} minSize={12} className="card-stack__summary-text" />
+          </div>
         </div>
 
-        {expanded && (
-          <div className={`card-stack__messages ${showMessages ? 'card-stack__messages--visible' : ''}`}>
-            {card.messages.map((msg, i) => {
-              const isMe = msg.sender === 'me';
-              const isSelected = selected.has(i);
-              return (
-                <div
-                  key={msg.id}
-                  className={`card-stack__message ${isMe ? 'card-stack__message--me' : 'card-stack__message--poke'} ${selectMode && isSelected ? 'card-stack__message--selected' : ''}`}
-                  style={{
-                    '--fan-index': i,
-                    '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
-                    '--fan-offset-y': `${FAN.offsetY}px`,
-                  } as React.CSSProperties}
-                  onClick={selectMode ? (e) => {
-                    e.stopPropagation();
-                    setSelected((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(i)) next.delete(i); else next.add(i);
-                      return next;
-                    });
-                  } : undefined}
-                >
-                  {selectMode && (
-                    <span className={`select-dot ${isSelected ? 'select-dot--on' : ''}`} />
-                  )}
-                  <p className="card-stack__message-text">{msg.text}</p>
-                  <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
-                </div>
-              );
-            })}
+        <div className={`card-stack__expand ${expanded ? 'card-stack__expand--open' : ''}`}>
+          <div className="card-stack__expand-inner">
+            <div className={`card-stack__messages ${showMessages ? 'card-stack__messages--visible' : ''}`}>
+              {card.messages.map((msg, i) => {
+                const isMe = msg.sender === 'me';
+                const isSelected = selected.has(i);
+                return (
+                  <div
+                    key={msg.id}
+                    className={`card-stack__message ${isMe ? 'card-stack__message--me' : 'card-stack__message--poke'} ${selectMode && isSelected ? 'card-stack__message--selected' : ''}`}
+                    style={{
+                      '--fan-index': i,
+                      '--fan-delay': `${TIMING.fanInitial + i * TIMING.fanStagger}ms`,
+                      '--fan-offset-y': `${FAN.offsetY}px`,
+                    } as React.CSSProperties}
+                    onClick={selectMode ? (e) => {
+                      e.stopPropagation();
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(i)) next.delete(i); else next.add(i);
+                        return next;
+                      });
+                    } : undefined}
+                  >
+                    {selectMode && (
+                      <span className={`select-dot ${isSelected ? 'select-dot--on' : ''}`} />
+                    )}
+                    <p className="card-stack__message-text">{msg.text}</p>
+                    <span className="card-stack__message-time">{formatTime(msg.sentAt)}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <div className="card-stack__meta">

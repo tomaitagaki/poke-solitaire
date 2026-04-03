@@ -243,23 +243,59 @@ h2 {
   margin-bottom: 8px;
 }
 
-/* ── Card body: crossfade between summary and messages ── */
+/* ── Card body: animated collapse/expand ── */
 
 .card-stack__body {
   position: relative;
+}
+
+.card-stack__collapse,
+.card-stack__expand {
+  display: grid;
+  transition: grid-template-rows 300ms var(--ease-out-quart);
+}
+
+.card-stack__collapse-inner,
+.card-stack__expand-inner {
   overflow: hidden;
 }
 
-.card-stack__summary {
-  transition: opacity 120ms var(--ease-out-cubic);
+/* Summary: visible by default, collapses when expanded */
+.card-stack__collapse {
+  grid-template-rows: 1fr;
 }
 
-.card-stack__summary--hidden {
+.card-stack__collapse--hidden {
+  grid-template-rows: 0fr;
+}
+
+.card-stack__collapse--hidden .card-stack__collapse-inner {
   opacity: 0;
-  height: 0;
-  margin: 0;
-  overflow: hidden;
-  transition: opacity 80ms ease, height 0ms 80ms;
+  transition: opacity 150ms ease;
+}
+
+.card-stack__collapse .card-stack__collapse-inner {
+  opacity: 1;
+  transition: opacity 150ms ease 100ms;
+}
+
+/* Messages: collapsed by default, expands when open */
+.card-stack__expand {
+  grid-template-rows: 0fr;
+}
+
+.card-stack__expand--open {
+  grid-template-rows: 1fr;
+}
+
+.card-stack__expand .card-stack__expand-inner {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.card-stack__expand--open .card-stack__expand-inner {
+  opacity: 1;
+  transition: opacity 200ms ease 100ms;
 }
 
 /* ── Messages: card-fan entrance ── */
@@ -716,7 +752,10 @@ h2 {
     transition: none;
   }
 
-  .card-stack__summary {
+  .card-stack__collapse,
+  .card-stack__expand,
+  .card-stack__collapse-inner,
+  .card-stack__expand-inner {
     transition: none;
   }
 
