@@ -1,6 +1,22 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { buildJournalDays, type JournalDay, type MessageRow } from '../../shared/journal';
+
+function expandHome(p: string): string {
+  return p.startsWith('~') ? path.join(os.homedir(), p.slice(1)) : p;
+}
+
+export type HighlightSuggestion = {
+  cardId: string;
+  dayKey: string;
+  reason: string;
+};
+
+export type HighlightsData = {
+  generatedAt: string;
+  suggestions: HighlightSuggestion[];
+};
 
 const SAMPLE_ROWS: MessageRow[] = [
   {
@@ -33,11 +49,26 @@ export async function loadLocalJournalDays(): Promise<JournalDay[]> {
   }
 
   try {
-    const absolutePath = path.resolve(snapshotPath);
+    const absolutePath = path.resolve(expandHome(snapshotPath));
     const content = await fs.readFile(absolutePath, 'utf8');
     const rows = JSON.parse(content) as MessageRow[];
     return buildJournalDays(rows);
   } catch {
     return buildJournalDays(SAMPLE_ROWS);
+  }
+}
+
+export async function loadHighlights(): Promise<HighlightsData> {
+  const highlightsPath = process.env.POKE_HIGHLIGHTS_PATH;
+  if (!highlightsPath) {
+    return { generatedAt: '', suggestions: [] };
+  }
+
+  try {
+    const absolutePath = path.resolve(expandHome(highlightsPath));
+    const content = await fs.readFile(absolutePath, 'utf8');
+    return JSON.parse(content) as HighlightsData;
+  } catch {
+    return { generatedAt: '', suggestions: [] };
   }
 }

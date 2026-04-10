@@ -1,4 +1,5 @@
 import './globals.css';
+import 'agentation';
 import type { ReactNode } from 'react';
 
 export default function RootLayout({ children }: { children: ReactNode }) {

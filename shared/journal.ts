@@ -25,6 +25,7 @@ export type JournalCard = {
   summary: string;
   state: JournalState;
   messageIds: string[];
+  messages: MessageRow[];
   sourceConversationIds: string[];
   interactionCount: number;
   labels: string[];
@@ -63,7 +64,9 @@ function topicFromRow(row: MessageRow): string {
   if (row.subject?.trim()) return normalizeText(row.subject);
   if (row.conversationId?.trim()) return `Conversation ${row.conversationId}`;
   if (row.threadId?.trim()) return `Thread ${row.threadId}`;
-  return 'Untitled stack';
+  // Use first few words of the message text as the title
+  const words = normalizeText(row.text).split(' ').slice(0, 6).join(' ');
+  return words || 'Untitled stack';
 }
 
 function makeCardId(topic: string, dayKey: string, index: number): string {
@@ -143,7 +146,8 @@ export function clusterMessagesIntoCards(rows: MessageRow[]): JournalCard[] {
     const looseRows: MessageRow[] = [];
 
     for (const row of sorted) {
-      const key = row.threadId ?? row.conversationId;
+      // Primary grouping: subject (set by LLM clustering), then threadId/conversationId
+      const key = row.subject?.trim() || row.threadId || row.conversationId;
       if (!key) {
         looseRows.push(row);
         continue;
@@ -189,6 +193,7 @@ export function clusterMessagesIntoCards(rows: MessageRow[]): JournalCard[] {
         summary: summary || 'No summary yet.',
         state,
         messageIds: group.map((row) => row.id),
+        messages: group,
         sourceConversationIds: Array.from(new Set(group.map((row) => row.conversationId ?? row.threadId ?? row.id))),
         interactionCount: group.length,
         labels: ['cards', 'journal', state],
